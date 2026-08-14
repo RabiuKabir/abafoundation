@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundation Web App — Build Guide & UI Kit</title>
+<style>
+  :root{
+    --navy:#1F3A5F; --accent:#2E6E8E; --ink:#111827; --muted:#6B7280;
+    --line:#E5E7EB; --bg:#FFFFFF; --soft:#F7F9FB; --soft2:#EEF3F7;
+    --ok:#2F7D5D; --okbg:#E3F1EA; --warn:#8A6D1A; --warnbg:#FBF3D8;
+    --info:#2E5E8E; --infobg:#E5EEF6; --danger:#9B2C2C; --dangerbg:#F7E1E1;
+    --radius:12px; --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--soft);line-height:1.6;font-size:15px;}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{display:grid;grid-template-columns:236px 1fr;max-width:1240px;margin:0 auto;gap:0;}
+  /* sidebar nav */
+  nav.side{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:26px 18px;border-right:1px solid var(--line);background:var(--bg);}
+  nav.side .brand{font-weight:700;color:var(--navy);font-size:15px;line-height:1.3;margin-bottom:2px}
+  nav.side .sub{color:var(--muted);font-size:12px;margin-bottom:20px}
+  nav.side a{display:block;color:var(--ink);padding:6px 10px;border-radius:8px;font-size:13.5px;margin-bottom:2px}
+  nav.side a:hover{background:var(--soft2);text-decoration:none}
+  nav.side .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 6px 10px}
+  main{padding:40px 46px 90px;background:var(--soft);min-width:0}
+  header.top{background:linear-gradient(135deg,#1F3A5F,#2E6E8E);color:#fff;border-radius:16px;padding:30px 34px;margin-bottom:26px}
+  header.top h1{margin:0 0 6px;font-size:27px;letter-spacing:-.01em}
+  header.top p{margin:0;opacity:.92;font-size:14.5px;max-width:70ch}
+  section{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:26px 30px;margin-bottom:22px}
+  h2.sec{font-size:20px;color:var(--navy);margin:0 0 4px;letter-spacing:-.01em}
+  h2.sec .n{color:var(--accent);font-weight:700;margin-right:8px}
+  .lead{color:var(--muted);margin:0 0 20px;font-size:14px}
+  h3{font-size:15.5px;color:var(--navy);margin:22px 0 8px}
+  p{margin:0 0 12px}
+  .banner{border-radius:var(--radius);padding:16px 20px;margin-bottom:22px;font-size:14px}
+  .banner.assume{background:var(--warnbg);border:1px solid #EBD9A6;color:#5b491a}
+  .banner b{color:#3f3411}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--muted);margin-left:6px;vertical-align:middle}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--soft)}
+  .card h4{margin:0 0 4px;font-size:14px;color:var(--navy)}
+  .card p{margin:0;font-size:13px;color:var(--muted)}
+  .card .tag{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 4px}
+  th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:600;font-size:12.5px}
+  td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:var(--soft)}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--soft2);padding:1px 5px;border-radius:5px;color:#254}
+  pre{font-family:var(--mono);font-size:12.5px;background:#0f1b2a;color:#d6e2f0;padding:16px 18px;border-radius:10px;overflow:auto;line-height:1.5}
+  pre .c{color:#7d93ad}
+  pre .k{color:#8fd0ff}
+  ul.clean{margin:6px 0 12px;padding-left:20px}
+  ul.clean li{margin-bottom:5px}
+  .chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin:1px 3px 1px 0}
+  .fe{background:#E5EEF6;color:#25567e}.be{background:#E9E3F5;color:#5b3f8a}.db{background:#E3F1EA;color:#2f7d5d}
+  .sec2{background:#FBF3D8;color:#8a6d1a}.qa{background:#F7E1E1;color:#9b2c2c}.ops{background:#EAEAEA;color:#444}
+  /* phase */
+  .phase{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:16px 18px;margin-bottom:14px;background:var(--soft)}
+  .phase h4{margin:0 0 2px;font-size:15px;color:var(--navy)}
+  .phase .wk{font-size:12px;color:var(--muted);font-weight:600}
+  .phase .row{font-size:13px;margin-top:8px}
+  .phase .row b{color:var(--navy)}
+  .done{background:var(--okbg);border:1px solid #BFE0CE;border-radius:8px;padding:7px 11px;font-size:12.5px;color:#245c43;margin-top:8px}
+  .rbac td:first-child{font-weight:600;color:var(--navy)}
+  .mods{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mod{border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .mod h4{margin:0 0 3px;font-size:14px;color:var(--navy)}
+  .mod .roles{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .mod .roles b{color:var(--accent)}
+  .mod p{font-size:12.5px;color:#374151;margin:0}
+
+  /* ============ UI MOCKUPS ============ */
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .mk{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .mk .cap{padding:9px 13px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);background:var(--soft)}
+  .mk .cap b{color:var(--navy)}
+  .browser{background:#fff}
+  .bbar{display:flex;align-items:center;gap:6px;padding:8px 11px;background:#f1f3f5;border-bottom:1px solid var(--line)}
+  .bbar i{width:9px;height:9px;border-radius:50%;background:#cfd4da;display:inline-block}
+  .bbar .url{flex:1;margin-left:8px;background:#fff;border:1px solid var(--line);border-radius:6px;font-size:10.5px;color:#8a97a5;padding:2px 8px;font-family:var(--mono)}
+  .screen{padding:0;font-size:11px;color:#374151;background:#fff}
+  /* generic mock atoms */
+  .navbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .logo{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--navy);font-size:12px}
+  .logo .mark{width:16px;height:16px;border-radius:5px;background:linear-gradient(135deg,#1F3A5F,#2E6E8E)}
+  .navlinks{display:flex;gap:12px;color:var(--muted);font-size:10.5px}
+  .btn{display:inline-block;background:var(--navy);color:#fff;border-radius:7px;padding:5px 11px;font-size:10.5px;font-weight:600}
+  .btn.g{background:var(--accent)}
+  .btn.o{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+  .btn.sm{padding:3px 8px;font-size:9.5px}
+  .ph{background:repeating-linear-gradient(135deg,#eef2f5,#eef2f5 8px,#e8edf1 8px,#e8edf1 16px);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#aab6c2;font-size:10px}
+  .hero{padding:22px 16px;text-align:center;background:linear-gradient(160deg,#eef4f8,#fbfcfd)}
+  .hero .h{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:5px}
+  .hero .s{font-size:10.5px;color:var(--muted);max-width:34ch;margin:0 auto 10px}
+  .bar{height:8px;background:#e9eef2;border-radius:5px;margin:5px 0}
+  .bar.s{width:60%}.bar.xs{width:40%}.bar.l{width:85%}
+  .row{display:flex;gap:10px}
+  .col{flex:1}
+  .cardm{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}
+  .foot{padding:9px 14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:#9aa5b1;font-size:9.5px}
+  .chipf{display:inline-block;font-size:9px;padding:1px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted);margin-right:4px}
+  .chipf.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .field{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:10px;color:#9aa5b1;background:#fff;margin-bottom:7px}
+  .lbl{font-size:9.5px;color:var(--muted);margin-bottom:2px;display:block;font-weight:600}
+  /* admin shell */
+  .app{display:flex;min-height:250px}
+  .sb{width:120px;background:#122033;color:#c7d2de;padding:12px 8px;font-size:10px}
+  .sb .b{font-weight:700;color:#fff;font-size:11px;display:flex;align-items:center;gap:6px;margin-bottom:12px}
+  .sb .b .mark{width:14px;height:14px;border-radius:4px;background:linear-gradient(135deg,#3e6f96,#2E6E8E)}
+  .sb a{display:block;color:#9fb0c2;padding:5px 8px;border-radius:6px;margin-bottom:2px;font-size:10px}
+  .sb a.on{background:#1d3350;color:#fff}
+  .main2{flex:1;padding:12px 14px;background:var(--soft)}
+  .top2{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .top2 .t{font-weight:700;color:var(--navy);font-size:12.5px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .kpi .v{font-size:15px;font-weight:700;color:var(--navy)}
+  .kpi .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  table.mini{width:100%;border-collapse:collapse;font-size:9.5px}
+  table.mini th{background:#eef3f7;color:#42586e;padding:5px 7px;font-size:9px;text-transform:uppercase;letter-spacing:.03em}
+  table.mini td{padding:5px 7px;border-bottom:1px solid var(--line);color:#374151;background:#fff}
+  .badge{display:inline-block;font-size:8.5px;padding:1px 6px;border-radius:999px;font-weight:600}
+  .badge.g{background:var(--okbg);color:var(--ok)}
+  .badge.y{background:var(--warnbg);color:var(--warn)}
+  .badge.b{background:var(--infobg);color:var(--info)}
+  .badge.r{background:var(--dangerbg);color:var(--danger)}
+  .q{border-left:3px solid var(--accent);padding:4px 0 4px 14px;margin-bottom:12px}
+  .q b{color:var(--navy)}
+  .miss{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .miss .m{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--soft)}
+  .miss .m h4{margin:0 0 3px;font-size:13px;color:var(--danger)}
+  .miss .m p{margin:0;font-size:12.5px;color:#374151}
+  .foothint{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}nav.side{display:none}.gallery,.mods,.grid2,.grid3,.miss{grid-template-columns:1fr}main{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="side">
+  <div class="brand">Foundation Web App</div>
+  <div class="sub">Build Guide &amp; UI Kit</div>
+  <a href="#stack">Tech Stack</a>
+  <a href="#modules">Modules &amp; Roles</a>
+  <a href="#data">Data Model</a>
+  <a href="#folders">Folder Structure</a>
+  <a href="#roadmap">Phased Roadmap</a>
+  <div class="grp">UI — Public</div>
+  <a href="#ui-public">Public pages</a>
+  <div class="grp">UI — Admin</div>
+  <a href="#ui-admin">Admin pages</a>
+  <div class="grp">Wrap-up</div>
+  <a href="#missing">What you're missing</a>
+  <a href="#questions">Open questions</a>
+</nav>
+<main>
+  <header class="top">
+    <h1>Foundation Web App — Build Guide &amp; UI Kit</h1>
+    <p>A short, buildable plan for a small NGO site: decided stack, modules &amp; roles, data model, folder structure, a simplified phased roadmap (no CI/CD), and minimalist UI mockups for every page.</p>
+  </header>
+
+  <div class="banner assume">
+    <b>Working assumptions</b> (your written answers didn’t arrive in the message — correct any and I’ll revise): small NGO, modest traffic, single language &amp; currency · <b>Stripe</b> for online donations, one-off now with recurring later · emailed receipts, donors may opt in to contact · four staff roles (Owner, Admin, Finance, Editor) · offline/cash donations are recorded · “activities” are storytelling content (no ticketed events yet). Per your note, <b>no CI/CD</b> — deploys are a simple <code>git push</code> to Vercel.
+  </div>
+
+  <!-- ============ STACK ============ -->
+  <section id="stack">
+    <h2 class="sec"><span class="n">1</span>Tech Stack <span class="pill">decided · one choice each</span></h2>
+    <p class="lead">Chosen for the fewest moving parts: one codebase (Next.js does the public site, admin, and API), one database, managed hosting. Nothing here you have to operate yourself.</p>
+    <div class="grid3">
+      <div class="card"><div class="tag">framework</div><h4>Next.js (App Router) + TypeScript</h4><p>One project serves public pages (SEO-friendly SSR), the admin UI, and the API route handlers. Fewer parts than a separate frontend + backend.</p></div>
+      <div class="card"><div class="tag">styling</div><h4>Tailwind CSS</h4><p>Utility-first, minimalist by default. Add <code>shadcn/ui</code> for ready-made accessible components.</p></div>
+      <div class="card"><div class="tag">database</div><h4>PostgreSQL + Prisma ORM</h4><p>Managed Postgres (Neon or Supabase). Prisma gives typed queries + migrations. Parameterised by default → no SQL injection.</p></div>
+      <div class="card"><div class="tag">auth</div><h4>Auth.js (NextAuth) — credentials + roles</h4><p>Email/password with hashed passwords, JWT/session, role stored on the user. Add TOTP MFA for Owner/Admin later.</p></div>
+      <div class="card"><div class="tag">payments</div><h4>Stripe Checkout + webhook</h4><p>Hosted checkout keeps cards off your servers. A signed webhook is the <b>only</b> source of truth for donation status.</p></div>
+      <div class="card"><div class="tag">email</div><h4>Resend (transactional)</h4><p>Receipts, invites, password resets, contact alerts. One API, simple templates.</p></div>
+      <div class="card"><div class="tag">file storage</div><h4>Cloudflare R2 / S3 (via UploadThing)</h4><p>Media never touches the DB or app disk. UploadThing keeps signed-upload wiring trivial for a small team.</p></div>
+      <div class="card"><div class="tag">hosting</div><h4>Vercel + managed Postgres</h4><p>Push to deploy. Preview + production environments come built in — no pipeline to maintain.</p></div>
+      <div class="card"><div class="tag">safety net</div><h4>Sentry + managed DB backups</h4><p>Error tracking and automatic daily backups (point-in-time restore). The two things worth not skipping.</p></div>
+    </div>
+    <p style="margin-top:16px;font-size:13px;color:var(--muted)"><b>Prefer a separate backend?</b> Swap the API layer for a small <code>Express</code> or <code>NestJS</code> service and keep everything else. Not necessary at this size, but supported by the same data model and folder split.</p>
+  </section>
+
+  <!-- ============ MODULES & ROLES ============ -->
+  <section id="modules">
+    <h2 class="sec"><span class="n">2</span>Function Modules &amp; Roles</h2>
+    <p class="lead">Ten modules cover the whole app. Each notes which roles act on it. Authorization is enforced server-side in every API route — the UI only hides what the backend already forbids.</p>
+    <div class="mods">
+      <div class="mod"><h4>Public Website</h4><p>Home, About, Programs (list + filter), Activity detail, Contact, legal &amp; error pages.</p><div class="roles"><b>Public</b> — read published content, submit contact form.</div></div>
+      <div class="mod"><h4>Auth &amp; Accounts</h4><p>Login, invite-based onboarding, email verify, password reset, sessions. MFA for privileged roles (later).</p><div class="roles"><b>All staff</b> — own account. <b>Owner</b> — invite/deactivate users.</div></div>
+      <div class="mod"><h4>Content (Activities)</h4><p>CRUD with draft → in-review → published → archived. Categories, per-activity SEO fields.</p><div class="roles"><b>Editor</b> — create/edit own drafts, submit. <b>Admin/Owner</b> — approve &amp; publish.</div></div>
+      <div class="mod"><h4>Media Library</h4><p>Upload to object storage, validate type/size, thumbnails, alt text.</p><div class="roles"><b>Editor</b> — upload to own drafts. <b>Admin/Owner</b> — manage all.</div></div>
+      <div class="mod"><h4>Donations &amp; Payments</h4><p>Stripe checkout, webhook confirmation, receipts, offline entry, refunds.</p><div class="roles"><b>Public</b> — donate. <b>Finance</b> — reconcile, refund, add offline. <b>Admin/Owner</b> — view.</div></div>
+      <div class="mod"><h4>Admin Dashboard</h4><p>At-a-glance metrics, approval queue, contact inbox — the daily landing screen.</p><div class="roles"><b>All staff</b> — role-scoped view.</div></div>
+      <div class="mod"><h4>Reporting</h4><p>Donation totals by date/category/status, gross/fees/net, CSV export.</p><div class="roles"><b>Finance/Admin/Owner</b> — view &amp; export.</div></div>
+      <div class="mod"><h4>Users &amp; RBAC</h4><p>Roles, permission checks, invitations, deactivation.</p><div class="roles"><b>Owner</b> — full control. Others — none.</div></div>
+      <div class="mod"><h4>Audit Log</h4><p>Immutable record of logins, role changes, donation edits/refunds, deletes.</p><div class="roles"><b>Admin/Owner</b> — read. System — write.</div></div>
+      <div class="mod"><h4>Settings</h4><p>Org details, SEO defaults, category management; integration keys (Owner-only).</p><div class="roles"><b>Admin</b> — safe settings. <b>Owner</b> — dangerous settings/keys.</div></div>
+    </div>
+
+    <h3>Role &amp; permission matrix</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">C=create · R=read · U=update · D=delete · A=approve/publish · — none. All enforced in the backend.</p>
+    <table class="rbac">
+      <tr><th>Resource</th><th>Owner</th><th>Admin</th><th>Finance</th><th>Editor</th><th>Public</th></tr>
+      <tr><td>Content / activities</td><td>CRUD·A</td><td>CRUD·A</td><td>R</td><td>CRU (own drafts) · submit</td><td>R (published)</td></tr>
+      <tr><td>Media</td><td>CRUD</td><td>CRUD</td><td>—</td><td>C·R (own)</td><td>R</td></tr>
+      <tr><td>Online donations</td><td>R</td><td>R</td><td>R·U (refund/reconcile)</td><td>—</td><td>own receipt</td></tr>
+      <tr><td>Offline donations</td><td>CRUD</td><td>R</td><td>CRUD</td><td>—</td><td>—</td></tr>
+      <tr><td>Reports / export</td><td>R</td><td>R</td><td>R</td><td>—</td><td>—</td></tr>
+      <tr><td>Contact messages</td><td>CRUD</td><td>CRUD</td><td>—</td><td>—</td><td>C (submit)</td></tr>
+      <tr><td>Users &amp; roles</td><td>CRUD</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Settings / keys</td><td>CRU (incl. keys)</td><td>U (safe only)</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Audit log</td><td>R</td><td>R</td><td>R (finance scope)</td><td>—</td><td>—</td></tr>
+    </table>
+  </section>
+
+  <!-- ============ DATA MODEL ============ -->
+  <section id="data">
+    <h2 class="sec"><span class="n">3</span>Data Model <span class="pill">Prisma-style, brief</span></h2>
+    <p class="lead">Nine tables. Note the fields that make donations safe: a unique <code>providerPaymentId</code> (idempotent webhooks + reconciliation), plus fee/net and an <code>OFFLINE/ONLINE</code> source. Content carries status, slug, author, and SEO. Soft-delete via <code>deletedAt</code>.</p>
+<pre><span class="c">// prisma/schema.prisma (essentials)</span>
+<span class="k">model</span> User      { id  name  email@unique  passwordHash  role<span class="c">/*owner|admin|finance|editor*/</span>  status  createdAt }
+<span class="k">model</span> Invite    { id  email  role  tokenHash  expiresAt  acceptedAt? }
+<span class="k">model</span> Category  { id  name  slug@unique }
+<span class="k">model</span> Activity  { id  title  slug@unique  summary  body  status<span class="c">/*draft|in_review|published|archived*/</span>
+                     categoryId  coverMediaId?  authorId  publishedAt?
+                     seoTitle?  seoDescription?  createdAt  updatedAt  deletedAt? }
+<span class="k">model</span> Media     { id  activityId?  url  type<span class="c">/*image|video*/</span>  altText  createdById  createdAt }
+<span class="k">model</span> Donation  { id  donorName?  donorEmail?  amount  currency  fee  net
+                     source<span class="c">/*online|offline*/</span>  provider?  providerPaymentId?@unique
+                     status<span class="c">/*pending|completed|refunded|failed*/</span>  activityId?
+                     receiptNo?  consentContact  createdAt }
+<span class="k">model</span> Contact   { id  name  email  message  status<span class="c">/*new|handled*/</span>  createdAt }
+<span class="k">model</span> AuditLog  { id  userId?  action  entity  entityId?  meta<span class="c">/*json*/</span>  createdAt }
+<span class="k">model</span> Setting   { key@id  value<span class="c">/*json*/</span> }  <span class="c">// org details, SEO defaults, etc.</span></pre>
+  </section>
+
+  <!-- ============ FOLDERS ============ -->
+  <section id="folders">
+    <h2 class="sec"><span class="n">4</span>Folder Structure <span class="pill">Next.js App Router</span></h2>
+    <p class="lead">Public routes are ungrouped; admin lives under a protected <code>(admin)</code> group guarded by middleware; the API sits under <code>app/api</code>. Business logic lives in <code>lib/</code> so routes stay thin.</p>
+<pre>ngo-app/
+├─ <span class="k">app/</span>
+│  ├─ (public)/                 <span class="c"># public site</span>
+│  │  ├─ page.tsx               <span class="c"># Home</span>
+│  │  ├─ about/page.tsx
+│  │  ├─ programs/page.tsx      <span class="c"># list + filter</span>
+│  │  ├─ programs/[slug]/page.tsx
+│  │  ├─ donate/page.tsx
+│  │  ├─ donate/success/page.tsx
+│  │  ├─ contact/page.tsx
+│  │  └─ (legal)/privacy, terms
+│  ├─ (admin)/                  <span class="c"># protected — middleware checks role</span>
+│  │  ├─ layout.tsx             <span class="c"># sidebar shell</span>
+│  │  ├─ dashboard/page.tsx
+│  │  ├─ activities/            <span class="c"># list, new, [id]/edit</span>
+│  │  ├─ approvals/page.tsx
+│  │  ├─ donations/page.tsx
+│  │  ├─ reports/page.tsx
+│  │  ├─ messages/page.tsx      <span class="c"># contact inbox</span>
+│  │  ├─ users/page.tsx         <span class="c"># Owner only</span>
+│  │  ├─ audit/page.tsx
+│  │  └─ settings/page.tsx
+│  ├─ login/page.tsx
+│  └─ api/
+│     ├─ auth/[...nextauth]/route.ts
+│     ├─ activities/route.ts    <span class="c"># + [id]/route.ts, /publish</span>
+│     ├─ media/route.ts
+│     ├─ donations/route.ts     <span class="c"># create checkout, offline entry</span>
+│     ├─ webhooks/stripe/route.ts  <span class="c"># ← source of truth</span>
+│     ├─ contact/route.ts
+│     ├─ users/route.ts
+│     └─ reports/route.ts
+├─ <span class="k">components/</span>  ui/ (buttons, inputs)  ·  public/  ·  admin/
+├─ <span class="k">lib/</span>
+│  ├─ db.ts            <span class="c"># prisma client</span>
+│  ├─ auth.ts          <span class="c"># session + getCurrentUser()</span>
+│  ├─ rbac.ts          <span class="c"># can(user, action, resource) — used by every route</span>
+│  ├─ stripe.ts  mail.ts  storage.ts  audit.ts  validation.ts (zod)
+├─ prisma/  schema.prisma  ·  migrations/  ·  seed.ts
+├─ public/            <span class="c"># static assets</span>
+├─ middleware.ts      <span class="c"># protect /(admin) routes</span>
+└─ .env               <span class="c"># DB, STRIPE, RESEND, AUTH secrets (never committed)</span></pre>
+  </section>
+
+  <!-- ============ ROADMAP ============ -->
+  <section id="roadmap">
+    <h2 class="sec"><span class="n">5</span>Phased Roadmap <span class="pill">~6–8 weeks · small team</span></h2>
+    <p class="lead">Six lean phases. Security, accessibility, and testing are done inside each phase, not saved for the end. Discipline tags: <span class="chip fe">FE</span><span class="chip be">BE</span><span class="chip db">DB</span><span class="chip sec2">Sec</span><span class="chip qa">QA</span></p>
+
+    <div class="phase">
+      <h4>Phase 0 — Project Setup <span class="wk">· ~½ week</span></h4>
+      <div class="row"><b>Do:</b> scaffold Next.js + TS + Tailwind; connect managed Postgres; init Prisma + first migration; base layout, design tokens &amp; UI primitives; env vars; deploy to Vercel. <span class="chip db">DB</span><span class="chip fe">FE</span></div>
+      <div class="row"><b>Deliver:</b> running app, empty but deployed, DB reachable.</div>
+      <div class="done">✓ Done when: <code>git push</code> deploys a live URL and <code>prisma migrate</code> runs cleanly.</div>
+    </div>
+
+    <div class="phase">
+      <h4>Phase 1 — Auth &amp; RBAC <span class="wk">· ~1 week</span></h4>
+      <div class="row"><b>Do:</b> User model + roles; Auth.js credentials login; invite-based onboarding + email verify + password reset (Resend); <code>rbac.ts</code> <code>can()</code> helper; <code>middleware.ts</code> to gate <code>(admin)</code>; login page. <span class="chip be">BE</span><span class="chip sec2">Sec</span><span class="chip fe">FE</span></div>
+      <div class="row"><b>Deliver:</b> invite → set password → login → land on role-appropriate dashboard.</div>
+      <div class="done">✓ Done when: a non-Owner is rejected by the server (not just a hidden menu) from a users-only route.</div>
+    </div>
+
+    <div class="phase">
+      <h4>Phase 2 — Content &amp; Public Site <span class="wk">· ~1.5–2 weeks</span></h4>
+      <div class="row"><b>Do:</b> Activity + Category + Media models; media upload (validate type/size, alt text); activity CRUD with draft→review→publish; public Home / About / Programs (filter) / Activity detail / Contact (honeypot + rate limit); SEO fields, sitemap, 404/500; WCAG AA pass. <span class="chip db">DB</span><span class="chip be">BE</span><span class="chip fe">FE</span><span class="chip qa">QA</span></div>
+      <div class="row"><b>Deliver:</b> editor publishes an activity; public site shows it, accessibly.</div>
+      <div class="done">✓ Done when: an Editor’s draft cannot appear publicly until an Admin approves it.</div>
+    </div>
+
+    <div class="phase">
+      <h4>Phase 3 — Donations <span class="wk">· ~1 week</span></h4>
+      <div class="row"><b>Do:</b> Donation model; Stripe Checkout create-session; <code>webhooks/stripe</code> endpoint (verify signature, idempotent on <code>providerPaymentId</code>, set status); receipt email; success page reads server-confirmed status; Finance offline-entry form. <span class="chip be">BE</span><span class="chip sec2">Sec</span><span class="chip fe">FE</span></div>
+      <div class="row"><b>Deliver:</b> a test donation is recorded only via webhook, and a receipt arrives.</div>
+      <div class="done">✓ Done when: closing the browser before the thank-you page still records the donation correctly.</div>
+    </div>
+
+    <div class="phase">
+      <h4>Phase 4 — Admin &amp; Reports <span class="wk">· ~1 week</span></h4>
+      <div class="row"><b>Do:</b> dashboard metrics; approval queue; contact inbox with status; Users management (Owner); donation report with date/category/status filters + CSV export; audit log write + viewer; settings (categories, org, SEO, keys). <span class="chip fe">FE</span><span class="chip be">BE</span></div>
+      <div class="row"><b>Deliver:</b> Finance exports a report; Owner invites a user; sensitive actions are logged.</div>
+      <div class="done">✓ Done when: every donation edit/refund and role change appears in the audit log.</div>
+    </div>
+
+    <div class="phase">
+      <h4>Phase 5 — Security, Polish &amp; Launch <span class="wk">· ~1 week</span></h4>
+      <div class="row"><b>Do:</b> input validation everywhere (zod), rate limits on auth/contact, secure headers + CORS, bcrypt/argon2 hashing; accessibility &amp; mobile pass; confirm DB backups + do a restore drill; wire Sentry; connect domain + TLS; manual UAT with real staff. <span class="chip sec2">Sec</span><span class="chip qa">QA</span></div>
+      <div class="row"><b>Deliver:</b> production launch with backups verified and errors monitored.</div>
+      <div class="done">✓ Done when: a restore-from-backup succeeds and no high/critical security or a11y issue is open.</div>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:8px"><b>Deliberately skipped for now (your call):</b> CI/CD pipelines, Redis, APM suites, containers, MFA (add right after launch), recurring giving, newsletter, events/RSVP, second gateway. All can slot in later without rework.</p>
+  </section>
+
+  <!-- ============ UI PUBLIC ============ -->
+  <section id="ui-public">
+    <h2 class="sec"><span class="n">6</span>UI Design — Public Pages <span class="pill">minimalist</span></h2>
+    <p class="lead">One system: generous whitespace, a single navy/teal accent, one typeface, image areas as placeholders. Everything below is a layout guide, not final art.</p>
+    <div class="gallery">
+
+      <!-- HOME -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">hope-foundation.org</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div>
+            <div class="navlinks">Programs · About · Contact</div><span class="btn g">Donate</span></div>
+          <div class="hero"><div class="h">Small acts, real change.</div>
+            <div class="s">We run feeding programs, scholarships and community drives.</div>
+            <span class="btn">Donate Now</span> &nbsp;<span class="btn o">Learn More</span></div>
+          <div style="padding:12px 14px">
+            <div style="font-size:10px;font-weight:700;color:var(--navy);margin-bottom:7px">Featured stories</div>
+            <div class="row">
+              <div class="col cardm"><div class="ph" style="height:34px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+              <div class="col cardm"><div class="ph" style="height:34px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+              <div class="col cardm"><div class="ph" style="height:34px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+            </div>
+          </div>
+          <div class="foot"><span>© Hope Foundation</span><span>Social · Privacy · Terms</span></div>
+        </div>
+      </div><div class="cap"><b>Home</b> — hero, primary CTA, 3 featured activities, footer.</div></div>
+
+      <!-- PROGRAMS LIST -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">hope-foundation.org/programs</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About · Contact</div><span class="btn g">Donate</span></div>
+          <div style="padding:12px 14px">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">Our Programs</div>
+            <div style="margin-bottom:10px"><span class="chipf on">All</span><span class="chipf">Feeding</span><span class="chipf">Scholarships</span><span class="chipf">Donations</span></div>
+            <div class="row" style="margin-bottom:8px">
+              <div class="col cardm"><div class="ph" style="height:40px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+              <div class="col cardm"><div class="ph" style="height:40px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+            </div>
+            <div class="row">
+              <div class="col cardm"><div class="ph" style="height:40px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+              <div class="col cardm"><div class="ph" style="height:40px">image</div><div class="bar s" style="margin-top:6px"></div><div class="bar xs"></div></div>
+            </div>
+            <div style="text-align:center;margin-top:10px;color:var(--muted);font-size:9.5px">‹ 1 2 3 ›</div>
+          </div>
+        </div>
+      </div><div class="cap"><b>Programs</b> — category filter chips, card grid, pagination.</div></div>
+
+      <!-- ACTIVITY DETAIL -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">…/programs/school-meals-2026</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About · Contact</div><span class="btn g">Donate</span></div>
+          <div style="padding:12px 14px">
+            <div style="font-size:9px;color:var(--muted);margin-bottom:4px">Feeding · 12 Mar 2026</div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">School Meals Program 2026</div>
+            <div class="ph" style="height:70px;margin-bottom:8px">cover image</div>
+            <div class="bar l"></div><div class="bar"></div><div class="bar s"></div>
+            <div class="row" style="margin-top:8px"><div class="col ph" style="height:26px">img</div><div class="col ph" style="height:26px">img</div><div class="col ph" style="height:26px">img</div></div>
+            <div style="margin-top:10px"><span class="btn">Support this program</span></div>
+          </div>
+        </div>
+      </div><div class="cap"><b>Activity detail</b> — category/date, cover, story, media gallery, inline donate CTA.</div></div>
+
+      <!-- DONATE -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">hope-foundation.org/donate</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About</div></div>
+          <div style="padding:14px 16px;max-width:280px;margin:0 auto">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px">Make a donation</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">100% goes to our programs.</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px"><span class="chipf on" style="flex:1;text-align:center;padding:6px 0">$50</span><span class="chipf" style="flex:1;text-align:center;padding:6px 0">$100</span><span class="chipf" style="flex:1;text-align:center;padding:6px 0">$250</span><span class="chipf" style="flex:1;text-align:center;padding:6px 0">Custom</span></div>
+            <span class="lbl">Name</span><div class="field">Jane Donor</div>
+            <span class="lbl">Email (for receipt)</span><div class="field">jane@email.com</div>
+            <div style="font-size:9px;color:var(--muted);margin-bottom:8px">☐ Keep me updated about your work</div>
+            <span class="btn g" style="display:block;text-align:center;padding:8px">Continue to secure checkout →</span>
+            <div style="font-size:8.5px;color:#9aa5b1;text-align:center;margin-top:6px">🔒 Payments handled by Stripe</div>
+          </div>
+        </div>
+      </div><div class="cap"><b>Donate</b> — preset tiers + custom, minimal fields, hands off to Stripe.</div></div>
+
+      <!-- SUCCESS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">…/donate/success</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About</div></div>
+          <div style="padding:34px 16px;text-align:center">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--okbg);color:var(--ok);font-size:20px;line-height:38px;margin:0 auto 12px">✓</div>
+            <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:5px">Thank you, Jane!</div>
+            <div style="font-size:10.5px;color:var(--muted);max-width:32ch;margin:0 auto 12px">Your $100 gift is confirmed. A receipt is on its way to your email.</div>
+            <span class="btn o">Back to home</span>
+          </div>
+        </div>
+      </div><div class="cap"><b>Thank-you</b> — reflects <i>server-confirmed</i> status (never client-assumed).</div></div>
+
+      <!-- CONTACT -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">hope-foundation.org/contact</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About · Contact</div><span class="btn g">Donate</span></div>
+          <div style="padding:12px 14px"><div class="row">
+            <div class="col" style="max-width:150px">
+              <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">Get in touch</div>
+              <span class="lbl">Name</span><div class="field">&nbsp;</div>
+              <span class="lbl">Email</span><div class="field">&nbsp;</div>
+              <span class="lbl">Message</span><div class="field" style="height:34px">&nbsp;</div>
+              <span class="btn" style="display:block;text-align:center">Send message</span>
+            </div>
+            <div class="col ph" style="min-height:130px">map</div>
+          </div></div>
+        </div>
+      </div><div class="cap"><b>Contact</b> — simple form (honeypot + rate-limited) beside an embedded map.</div></div>
+
+      <!-- ABOUT -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">hope-foundation.org/about</span></div>
+        <div class="screen">
+          <div class="navbar"><div class="logo"><span class="mark"></span>Hope Foundation</div><div class="navlinks">Programs · About · Contact</div><span class="btn g">Donate</span></div>
+          <div style="padding:12px 14px">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Who we are</div>
+            <div class="bar l"></div><div class="bar"></div><div class="bar s"></div>
+            <div style="font-size:10px;font-weight:700;color:var(--navy);margin:10px 0 6px">Our team</div>
+            <div class="row"><div class="col" style="text-align:center"><div class="ph" style="height:32px;border-radius:50%;width:32px;margin:0 auto">·</div><div class="bar xs" style="margin:5px auto;width:70%"></div></div>
+              <div class="col" style="text-align:center"><div class="ph" style="height:32px;border-radius:50%;width:32px;margin:0 auto">·</div><div class="bar xs" style="margin:5px auto;width:70%"></div></div>
+              <div class="col" style="text-align:center"><div class="ph" style="height:32px;border-radius:50%;width:32px;margin:0 auto">·</div><div class="bar xs" style="margin:5px auto;width:70%"></div></div></div>
+          </div>
+        </div>
+      </div><div class="cap"><b>About</b> — mission narrative, history, team.</div></div>
+
+      <!-- 404 -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">…/oops</span></div>
+        <div class="screen"><div style="padding:44px 16px;text-align:center">
+          <div style="font-size:30px;font-weight:800;color:var(--navy)">404</div>
+          <div style="font-size:10.5px;color:var(--muted);margin:6px 0 12px">That page has moved on.</div>
+          <span class="btn o">Back to home</span>
+        </div></div>
+      </div><div class="cap"><b>404 / error</b> — friendly, on-brand, one way back.</div></div>
+
+    </div>
+  </section>
+
+  <!-- ============ UI ADMIN ============ -->
+  <section id="ui-admin">
+    <h2 class="sec"><span class="n">7</span>UI Design — Admin Pages <span class="pill">app shell</span></h2>
+    <p class="lead">A dark sidebar + light content shell across all admin screens. Menu items appear only for roles allowed to use them, but the server enforces access regardless.</p>
+    <div class="gallery">
+
+      <!-- LOGIN -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin.hope-foundation.org/login</span></div>
+        <div class="screen"><div style="padding:34px 16px;display:flex;justify-content:center">
+          <div style="width:210px;text-align:center">
+            <div class="logo" style="justify-content:center;margin-bottom:12px"><span class="mark"></span>Hope Admin</div>
+            <span class="lbl" style="text-align:left">Email</span><div class="field">&nbsp;</div>
+            <span class="lbl" style="text-align:left">Password</span><div class="field">&nbsp;</div>
+            <span class="btn" style="display:block;text-align:center;padding:7px">Sign in</span>
+            <div style="font-size:9px;color:var(--accent);margin-top:8px">Forgot password?</div>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Login</b> — email/password; reset link; MFA prompt added later for Owner/Admin.</div></div>
+
+      <!-- DASHBOARD -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/dashboard</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div>
+            <a class="on">Dashboard</a><a>Activities</a><a>Approvals</a><a>Donations</a><a>Reports</a><a>Messages</a><a>Users</a><a>Settings</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Dashboard</span><span class="btn sm g">New activity</span></div>
+            <div class="kpis">
+              <div class="kpi"><div class="v">$12.4k</div><div class="k">Raised (30d)</div></div>
+              <div class="kpi"><div class="v">86</div><div class="k">Donations</div></div>
+              <div class="kpi"><div class="v">4</div><div class="k">Pending review</div></div>
+              <div class="kpi"><div class="v">3</div><div class="k">New messages</div></div>
+            </div>
+            <div style="font-size:9.5px;font-weight:700;color:var(--navy);margin-bottom:5px">Recent donations</div>
+            <table class="mini"><tr><th>Donor</th><th>Amount</th><th>Status</th></tr>
+              <tr><td>Jane D.</td><td>$100</td><td><span class="badge g">completed</span></td></tr>
+              <tr><td>Offline · cash</td><td>$40</td><td><span class="badge b">offline</span></td></tr>
+              <tr><td>M. Ali</td><td>$250</td><td><span class="badge g">completed</span></td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Dashboard</b> — KPI row, recent donations, quick actions; role-scoped.</div></div>
+
+      <!-- ACTIVITIES LIST -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/activities</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a class="on">Activities</a><a>Approvals</a><a>Donations</a><a>Reports</a><a>Messages</a><a>Users</a><a>Settings</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Activities</span><span class="btn sm g">+ New</span></div>
+            <table class="mini"><tr><th>Title</th><th>Category</th><th>Status</th><th></th></tr>
+              <tr><td>School Meals 2026</td><td>Feeding</td><td><span class="badge g">published</span></td><td>Edit</td></tr>
+              <tr><td>Winter Scholarships</td><td>Scholarship</td><td><span class="badge y">in review</span></td><td>Edit</td></tr>
+              <tr><td>Well Project</td><td>Donations</td><td><span class="badge b">draft</span></td><td>Edit</td></tr>
+              <tr><td>Ramadan Drive</td><td>Feeding</td><td><span class="badge r">archived</span></td><td>Edit</td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Activities</b> — table with status badges; Editors see only their drafts.</div></div>
+
+      <!-- ACTIVITY EDITOR -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/activities/12/edit</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a class="on">Activities</a><a>Approvals</a><a>Donations</a><a>Reports</a><a>Users</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Edit activity</span><span><span class="btn sm o">Save draft</span> <span class="btn sm">Submit</span></span></div>
+            <span class="lbl">Title</span><div class="field" style="background:var(--soft)">School Meals 2026</div>
+            <div class="row"><div class="col"><span class="lbl">Category</span><div class="field">Feeding ▾</div></div><div class="col"><span class="lbl">Event date</span><div class="field">12 Mar 2026</div></div></div>
+            <span class="lbl">Cover image</span><div class="ph" style="height:34px;margin-bottom:7px">drop / upload · alt text</div>
+            <span class="lbl">Body</span><div class="field" style="height:30px">Rich text…</div>
+            <div style="font-size:8.5px;color:var(--muted)">SEO title · meta description (collapsible)</div>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Activity editor</b> — fields, media upload w/ alt text, Save draft / Submit for review.</div></div>
+
+      <!-- APPROVALS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/approvals</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Activities</a><a class="on">Approvals</a><a>Donations</a><a>Reports</a><a>Users</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Approval queue</span><span class="badge y">4 waiting</span></div>
+            <table class="mini"><tr><th>Title</th><th>By</th><th>Submitted</th><th></th></tr>
+              <tr><td>Winter Scholarships</td><td>Sara (Editor)</td><td>2h ago</td><td><span class="btn sm">Review</span></td></tr>
+              <tr><td>Food Bank Update</td><td>Sara</td><td>1d ago</td><td><span class="btn sm">Review</span></td></tr></table>
+            <div style="font-size:8.5px;color:var(--muted);margin-top:8px">Reviewing → Approve &amp; publish · or Return with a note</div>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Approvals</b> — Admin/Owner approve-publish or return Editor submissions.</div></div>
+
+      <!-- DONATIONS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/donations</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Activities</a><a>Approvals</a><a class="on">Donations</a><a>Reports</a><a>Users</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Donations</span><span class="btn sm o">+ Offline entry</span></div>
+            <div style="margin-bottom:7px"><span class="chipf on">All</span><span class="chipf">Online</span><span class="chipf">Offline</span><span class="chipf">Refunded</span></div>
+            <table class="mini"><tr><th>Donor</th><th>Amount</th><th>Src</th><th>Status</th></tr>
+              <tr><td>Jane D.</td><td>$100</td><td>Stripe</td><td><span class="badge g">completed</span></td></tr>
+              <tr><td>Cash gift</td><td>$40</td><td>Offline</td><td><span class="badge b">recorded</span></td></tr>
+              <tr><td>R. Okoro</td><td>$60</td><td>Stripe</td><td><span class="badge r">refunded</span></td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Donations</b> — filter by source/status; Finance adds offline gifts &amp; refunds.</div></div>
+
+      <!-- REPORTS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/reports</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Donations</a><a class="on">Reports</a><a>Users</a><a>Settings</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Donation report</span><span class="btn sm g">Export CSV</span></div>
+            <div class="row" style="margin-bottom:8px"><div class="col"><span class="lbl">From</span><div class="field">1 Aug</div></div><div class="col"><span class="lbl">To</span><div class="field">31 Aug</div></div><div class="col"><span class="lbl">Category</span><div class="field">All ▾</div></div></div>
+            <div class="kpis" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><div class="v">$12,430</div><div class="k">Gross</div></div><div class="kpi"><div class="v">$361</div><div class="k">Fees</div></div><div class="kpi"><div class="v">$12,069</div><div class="k">Net</div></div></div>
+            <table class="mini"><tr><th>Category</th><th>Count</th><th>Net</th></tr><tr><td>Feeding</td><td>52</td><td>$6,900</td></tr><tr><td>Scholarships</td><td>34</td><td>$5,169</td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Reports</b> — date/category filters, gross/fees/net, breakdown, CSV export.</div></div>
+
+      <!-- MESSAGES -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/messages</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Activities</a><a class="on">Messages</a><a>Donations</a><a>Users</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Contact inbox</span><span class="badge y">3 new</span></div>
+            <table class="mini"><tr><th>From</th><th>Message</th><th>Status</th></tr>
+              <tr><td>P. Mensah</td><td>Volunteering enquiry…</td><td><span class="badge y">new</span></td></tr>
+              <tr><td>A. Khan</td><td>Partnership idea…</td><td><span class="badge y">new</span></td></tr>
+              <tr><td>L. Silva</td><td>Thank you…</td><td><span class="badge g">handled</span></td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Messages</b> — contact submissions with new/handled status.</div></div>
+
+      <!-- USERS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/users <span style="opacity:.6">· Owner only</span></span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Donations</a><a>Reports</a><a class="on">Users</a><a>Settings</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Users &amp; roles</span><span class="btn sm g">Invite user</span></div>
+            <table class="mini"><tr><th>Name</th><th>Role</th><th>Status</th></tr>
+              <tr><td>You</td><td><span class="badge b">Owner</span></td><td><span class="badge g">active</span></td></tr>
+              <tr><td>Sara</td><td><span class="badge b">Editor</span></td><td><span class="badge g">active</span></td></tr>
+              <tr><td>Musa</td><td><span class="badge b">Finance</span></td><td><span class="badge g">active</span></td></tr>
+              <tr><td>invited@…</td><td><span class="badge b">Editor</span></td><td><span class="badge y">pending</span></td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Users</b> — Owner-only: invite, assign role, deactivate.</div></div>
+
+      <!-- SETTINGS -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/settings</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Users</a><a class="on">Settings</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Settings</span></div>
+            <div style="font-size:9px;font-weight:700;color:var(--navy);margin:2px 0 5px">Organisation</div>
+            <span class="lbl">Name / mission / contact</span><div class="field">Hope Foundation…</div>
+            <div style="font-size:9px;font-weight:700;color:var(--navy);margin:6px 0 5px">Categories</div>
+            <div><span class="chipf">Feeding ✕</span><span class="chipf">Scholarships ✕</span><span class="chipf">+ add</span></div>
+            <div style="font-size:9px;font-weight:700;color:var(--danger);margin:8px 0 5px">Integration keys · Owner</div>
+            <div class="field" style="background:var(--dangerbg)">Stripe · Resend keys 🔒</div>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Settings</b> — org details &amp; categories (Admin); keys are Owner-only.</div></div>
+
+      <!-- AUDIT -->
+      <div class="mk"><div class="browser">
+        <div class="bbar"><i></i><i></i><i></i><span class="url">admin…/audit</span></div>
+        <div class="screen"><div class="app">
+          <div class="sb"><div class="b"><span class="mark"></span>Hope</div><a>Dashboard</a><a>Users</a><a>Settings</a><a class="on">Audit log</a></div>
+          <div class="main2">
+            <div class="top2"><span class="t">Audit log</span></div>
+            <table class="mini"><tr><th>When</th><th>Who</th><th>Action</th></tr>
+              <tr><td>09:12</td><td>Musa</td><td>Refunded donation #204</td></tr>
+              <tr><td>08:40</td><td>You</td><td>Changed Sara → Editor</td></tr>
+              <tr><td>Yst</td><td>Admin</td><td>Published “School Meals 2026”</td></tr></table>
+          </div>
+        </div></div>
+      </div><div class="cap"><b>Audit log</b> — read-only trail of sensitive actions.</div></div>
+
+    </div>
+  </section>
+
+  <!-- ============ MISSING ============ -->
+  <section id="missing">
+    <h2 class="sec"><span class="n">8</span>What You’re Missing</h2>
+    <p class="lead">Cheap now, expensive later — worth deciding before you start building.</p>
+    <div class="miss">
+      <div class="m"><h4>A “from” email domain</h4><p>Receipts/invites need a verified sending domain (SPF/DKIM in Resend) or they land in spam. Set this up in Phase 1.</p></div>
+      <div class="m"><h4>Privacy policy &amp; consent copy</h4><p>You collect donor and contact emails. You need real privacy/terms text and a consent checkbox — not lorem ipsum.</p></div>
+      <div class="m"><h4>Seed / first Owner account</h4><p>Decide how the very first Owner is created (a one-off seed script), since there’s no one to invite them.</p></div>
+      <div class="m"><h4>Refund &amp; failed-payment policy</h4><p>Who can refund, and what a donor sees if payment fails. Small, but undefined today.</p></div>
+      <div class="m"><h4>Content ownership on staff exit</h4><p>When an Editor leaves, what happens to their drafts? Reassign to Admin on deactivation.</p></div>
+      <div class="m"><h4>Backups you’ve actually restored</h4><p>Managed backups are on by default — but run one real restore drill in Phase 5 so it’s proven, not assumed.</p></div>
+      <div class="m"><h4>Brand assets</h4><p>Logo, colours, a few real photos and 2–3 real stories — the minimalist design needs real content to look finished.</p></div>
+      <div class="m"><h4>Legal entity for Stripe</h4><p>Stripe payouts need the NGO’s bank + registration details. Start that verification early; it can take days.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ QUESTIONS ============ -->
+  <section id="questions">
+    <h2 class="sec"><span class="n">9</span>Questions I Have</h2>
+    <p class="lead">Answering these lets me tighten the plan (or the schema) precisely. Your earlier answers didn’t come through, so a couple repeat.</p>
+    <div class="q"><b>1. Recurring giving —</b> one-off only at launch, or do you want monthly donations from day one? (It changes the Stripe setup: Checkout vs. subscriptions.)</div>
+    <div class="q"><b>2. Currency &amp; payout country —</b> which single currency, and which country is the NGO registered in (for Stripe)?</div>
+    <div class="q"><b>3. Team size building this —</b> solo developer, or a small team? (Only affects the timeline, not the plan.)</div>
+    <div class="q"><b>4. Roles —</b> is the four-role model right, or will the same person handle both finance and content (fewer roles)?</div>
+    <div class="q"><b>5. Editor approval —</b> confirm Editors must get Admin approval before publishing (recommended), vs. trusted-publish.</div>
+    <div class="q"><b>6. Newsletter —</b> in scope now, later, or not at all? If yes, which provider (Mailchimp, Resend audiences)?</div>
+    <div class="q"><b>7. Languages —</b> English only, or must the public site be multilingual? (Best decided before building pages.)</div>
+    <div class="q"><b>8. Domain &amp; email —</b> do you already own the domain and a business email to send receipts from?</div>
+    <div class="q"><b>9. Content volume —</b> roughly how many activities/year? (Tells me whether to add search now or later.)</div>
+    <div class="q"><b>10. Existing data —</b> any past donation records or content to migrate in, or a clean start?</div>
+  </section>
+
+  <p class="foothint">Foundation Web App — Build Guide &amp; UI Kit · minimalist reference for development · v1</p>
+</main>
+</div>
+</body>
+</html>
