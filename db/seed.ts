@@ -1,0 +1,124 @@
+/**
+ * Seed — creates exactly ONE Admin user, plus placeholder settings.
+ *
+ *   npm run db:seed
+ *
+ * Reads everything from .env (never from the repo):
+ *   SEED_ADMIN_EMAIL, SEED_ADMIN_NAME, SEED_ADMIN_PASSWORD
+ *
+ * Idempotent: re-running promotes/reactivates the existing user instead of
+ * creating a duplicate, leaves their password alone, and never overwrites
+ * settings that have already been edited.
+ */
+import { config } from "dotenv";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import bcrypt from "bcryptjs";
+
+import { settings, users } from "./schema";
+import { sslFor } from "./ssl";
+
+/**
+ * DEMO VALUES — not a real account. Replace in Admin → Settings before the
+ * Donate page goes live; these are what donors would transfer money to.
+ */
+const DEMO_SETTINGS = [
+  {
+    key: "org",
+    value: {
+      name: "ABA Foundation",
+      email: "hello@abafoundation.org",
+      phone: "+234 800 000 0000",
+      address: "Demo address — update in Settings",
+      currency: "NGN",
+      currencySymbol: "₦",
+      locale: "en-NG",
+    },
+  },
+  {
+    key: "bank_details",
+    value: {
+      demo: true, // remove once the real account is entered
+      accountName: "ABA Foundation (DEMO — replace)",
+      accountNumber: "0000000000",
+      bankName: "Demo Bank Plc",
+      currency: "NGN",
+      referenceHint:
+        "Quote your full name as the transfer narration, then tell us about it below.",
+    },
+  },
+];
+
+config({ path: ".env" });
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set in .env`);
+  return value;
+}
+
+async function main() {
+  // Seeding is a one-off script, so it uses the direct connection when one is
+  // configured rather than the pooler.
+  const url = process.env.DIRECT_URL || required("DATABASE_URL");
+  const email = required("SEED_ADMIN_EMAIL").trim().toLowerCase();
+  const password = required("SEED_ADMIN_PASSWORD");
+  const name = process.env.SEED_ADMIN_NAME?.trim() || "Administrator";
+
+  if (password.length < 8) {
+    throw new Error("SEED_ADMIN_PASSWORD must be at least 8 characters.");
+  }
+
+  const connection = postgres(url, {
+    prepare: false,
+    max: 1,
+    ssl: sslFor(url),
+  });
+  const db = drizzle(connection);
+
+  const [existing] = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(users)
+      .set({ role: "admin", active: true })
+      .where(eq(users.id, existing.id));
+    console.log(`✔ ${email} already exists — ensured role=admin, active=true.`);
+    console.log("  Password left unchanged. Use the reset flow to change it.");
+  } else {
+    const passwordHash = await bcrypt.hash(password, 12);
+    await db.insert(users).values({ name, email, passwordHash, role: "admin" });
+    console.log(`✔ Created Admin ${email}`);
+    console.log("  Sign in with the temporary password and change it at once.");
+  }
+
+  for (const row of DEMO_SETTINGS) {
+    const [present] = await db
+      .select({ key: settings.key })
+      .from(settings)
+      .where(eq(settings.key, row.key))
+      .limit(1);
+
+    if (present) {
+      console.log(`· settings["${row.key}"] already set — left untouched.`);
+    } else {
+      await db.insert(settings).values(row);
+      console.log(`✔ Seeded settings["${row.key}"] with DEMO values.`);
+    }
+  }
+
+  console.log("\n⚠ Bank details are placeholders. Replace them in");
+  console.log("  Admin → Settings before the Donate page goes live.");
+
+  await connection.end({ timeout: 5 });
+}
+
+main().catch((error) => {
+  console.error("✖ Seed failed:", error);
+  process.exit(1);
+});

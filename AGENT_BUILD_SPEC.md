@@ -12,33 +12,37 @@ Keep changes small and phase-scoped. Do not skip the **Hard Rules**.
 2. **Authorization is enforced on the server** in every API route via `can(user, action)`. The UI only hides what the server already forbids. Deny by default.
 3. **Validate every input** on the server (zod). Use the ORM (no hand-built SQL).
 4. **No secrets in the repo.** Everything via `.env`.
-5. **Database is MySQL 8+** with **Drizzle ORM**.
+5. **Database is PostgreSQL** (Supabase) with **Drizzle ORM**. *(Decided 15 Aug 2026 — was MySQL/PlanetScale; nothing had been applied, so the schema was ported to `pg-core` rather than migrated.)*
 
 ---
 
 ## Stack (decided)
 - **Framework:** Next.js (App Router, React Server Components) + **TypeScript** — one project for public site, admin, and API.
 - **Styling/UI:** Tailwind CSS + **shadcn/ui** (themed with DESIGN_SYSTEM.md tokens).
-- **Database:** **MySQL 8+** on a serverless provider (**PlanetScale**), via **Drizzle ORM** + drizzle-kit migrations.
+- **Database:** **PostgreSQL** on **Supabase**, via **Drizzle ORM** (`pg-core`) + drizzle-kit migrations.
 - **Auth:** **Auth.js (NextAuth)** credentials + roles (`admin` / `editor`) (primary). *Alternative: Clerk* if you'd rather offload auth entirely — but then roles live in Clerk metadata and `can()` reads from there.
 - **Payments:** **None (bank transfer).** No gateway, no card handling. See Donations below.
 - **Email:** Resend (pledge acknowledgements, invites, resets, contact/finance alerts).
-- **File storage:** S3-compatible (Cloudflare R2 / AWS S3), signed uploads — for activity media **and** payment-proof screenshots.
+- **File storage:** S3-compatible signed uploads — for activity media **and** payment-proof screenshots. **Supabase Storage** is the default now that the DB lives there (S3-compatible endpoint, one less vendor); Cloudflare R2 / AWS S3 remain drop-in alternatives.
 - **Deploy:** **Vercel or Netlify.** Deploy on `git push`.
 - **Safety net:** Sentry (errors) + provider daily backups.
 
-> **DB provider note:** PlanetScale = serverless **MySQL** (this spec). It disables foreign-key *constraints* by default — that's fine, Drizzle models relations in code. If you'd rather use **Neon**, that's **Postgres**, not MySQL — switching Drizzle from `mysql-core` to `pg-core` is a small change; ask and I'll flip the spec.
+> **DB provider note:** Supabase = managed **PostgreSQL**. Two connection strings matter: the **transaction pooler** (port 6543) for the app at runtime — required on serverless, and prepared statements must be disabled — and the **direct** connection (port 5432) for drizzle-kit migrations and the seed script, because DDL needs a real session.
+>
+> **Supabase features we are deliberately NOT using:** Supabase Auth (Auth.js owns sessions and roles — do not introduce a second identity system) and Row Level Security. We connect as the Postgres owner from trusted server code, so **RLS is not a security boundary here**. Hard Rule 2 stands unchanged: authorization is `can(user, action)` in every route.
 
 ---
 
 ## Environment variables (`.env`)
 ```
-DATABASE_URL="mysql://user:pass@host:3306/ngo"
+DATABASE_URL="postgresql://...pooler.supabase.com:6543/postgres"   # app runtime (transaction pooler)
+DIRECT_URL="postgresql://...pooler.supabase.com:5432/postgres"     # migrations + seed only
 AUTH_SECRET=...
 AUTH_URL=https://yourdomain.org
 RESEND_API_KEY=...
 EMAIL_FROM="Hope Foundation <hello@yourdomain.org>"
-S3_BUCKET=...  S3_REGION=...  S3_ACCESS_KEY=...  S3_SECRET_KEY=...   # media + payment proofs
+S3_BUCKET=...  S3_REGION=...  S3_ENDPOINT=...  S3_ACCESS_KEY=...  S3_SECRET_KEY=...   # media + payment proofs
+                                # S3_ENDPOINT = https://PROJECT.supabase.co/storage/v1/s3 (blank for AWS)
 SENTRY_DSN=...
 ```
 
@@ -74,110 +78,43 @@ Implement one helper: `can(user, action)` in `lib/rbac.ts`. Every protected rout
 
 ---
 
-## Data model (Drizzle — MySQL) → `db/schema.ts`
-```ts
-import { mysqlTable, varchar, text, boolean, timestamp, datetime,
-         decimal, mysqlEnum, json } from "drizzle-orm/mysql-core";
-import { createId } from "@paralleldrive/cuid2";
-const id = () => varchar("id",{length:24}).primaryKey().$defaultFn(() => createId());
-const ROLES = ["admin","editor"] as const;
+## Data model (Drizzle — PostgreSQL) → `db/schema.ts`
 
-export const users = mysqlTable("users", {
-  id: id(),
-  name: varchar("name",{length:255}).notNull(),
-  email: varchar("email",{length:255}).notNull().unique(),
-  passwordHash: varchar("password_hash",{length:255}).notNull(),
-  role: mysqlEnum("role", ROLES).notNull().default("editor"),
-  active: boolean("active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+**[`db/schema.ts`](db/schema.ts) is the authority — read it, do not retype it here.**
+Same nine tables as the original MySQL draft (users, invites, categories,
+activities, media, donations, contacts, audit_logs, settings) with identical
+columns and semantics. Only the dialect changed:
 
-export const invites = mysqlTable("invites", {
-  id: id(),
-  email: varchar("email",{length:255}).notNull(),
-  role: mysqlEnum("role", ROLES).notNull(),
-  tokenHash: varchar("token_hash",{length:255}).notNull(),
-  expiresAt: datetime("expires_at").notNull(),
-  acceptedAt: datetime("accepted_at"),
-});
+| MySQL draft | PostgreSQL now | Note |
+|---|---|---|
+| `mysqlTable` | `pgTable` | from `drizzle-orm/pg-core` |
+| `mysqlEnum(col, [...])` | `pgEnum(name, [...])` | Postgres enums are *named types*, declared once at module scope and reused (`role` is shared by users + invites) |
+| `timestamp` / `datetime` | `timestamp({ withTimezone: true })` | one type for both; everything is `timestamptz` |
+| `decimal(10,2)` | `numeric(10,2)` | still read back as a string — never do money maths in JS floats |
+| `json` | `jsonb` | indexable |
+| `.onUpdateNow()` | `.$onUpdate(() => new Date())` | **Drizzle-level, not a DB clause.** Raw SQL updates outside the ORM will not bump `updated_at` |
 
-export const categories = mysqlTable("categories", {
-  id: id(),
-  name: varchar("name",{length:120}).notNull(),
-  slug: varchar("slug",{length:140}).notNull().unique(),
-});
+`donations.currency` defaults to `NGN`.
 
-export const activities = mysqlTable("activities", {
-  id: id(),
-  title: varchar("title",{length:255}).notNull(),
-  slug: varchar("slug",{length:280}).notNull().unique(),
-  summary: text("summary").notNull(),
-  body: text("body").notNull(),
-  status: mysqlEnum("status",["draft","in_review","published","archived"]).notNull().default("draft"),
-  categoryId: varchar("category_id",{length:24}).notNull(),
-  coverMediaId: varchar("cover_media_id",{length:24}),
-  authorId: varchar("author_id",{length:24}).notNull(),
-  publishedAt: datetime("published_at"),
-  seoTitle: varchar("seo_title",{length:255}),
-  seoDescription: text("seo_description"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-  deletedAt: datetime("deleted_at"),
-});
+**Foreign keys are real, enforced constraints** (added 15 Aug 2026 — possible
+now that we're on Postgres). Eight of them:
 
-export const media = mysqlTable("media", {
-  id: id(),
-  activityId: varchar("activity_id",{length:24}),
-  url: varchar("url",{length:600}).notNull(),
-  type: mysqlEnum("type",["image","video"]).notNull().default("image"),
-  altText: varchar("alt_text",{length:300}).notNull(),
-  createdById: varchar("created_by_id",{length:24}).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+| Column | References | On delete | Why |
+|---|---|---|---|
+| `activities.category_id` | `categories.id` | **restrict** | a category in use cannot be deleted from Settings |
+| `activities.author_id` | `users.id` | **restrict** | content keeps its author |
+| `activities.cover_media_id` | `media.id` | set null | optional link; losing it costs nothing |
+| `media.activity_id` | `activities.id` | set null | media may be detached and reused |
+| `media.created_by_id` | `users.id` | **restrict** | upload attribution |
+| `donations.activity_id` | `activities.id` | **restrict** | an activity with donations against it can never be deleted |
+| `donations.confirmed_by_id` | `users.id` | **restrict** | who confirmed the money cannot be erased |
+| `audit_logs.user_id` | `users.id` | set null | the log row must outlive the account |
 
-export const donations = mysqlTable("donations", {
-  id: id(),
-  donorName: varchar("donor_name",{length:255}),
-  donorEmail: varchar("donor_email",{length:255}),
-  amount: decimal("amount",{precision:10,scale:2}).notNull(),
-  currency: varchar("currency",{length:3}).notNull().default("USD"),
-  method: mysqlEnum("method",["bank_transfer","cash"]).notNull().default("bank_transfer"),
-  reference: varchar("reference",{length:120}),          // what the donor quoted on the transfer
-  transferredAt: datetime("transferred_at"),
-  proofUrl: varchar("proof_url",{length:600}),           // optional screenshot
-  status: mysqlEnum("status",["pending","confirmed","rejected"]).notNull().default("pending"),
-  activityId: varchar("activity_id",{length:24}),
-  receiptNo: varchar("receipt_no",{length:60}),
-  consentContact: boolean("consent_contact").notNull().default(false),
-  confirmedById: varchar("confirmed_by_id",{length:24}), // which Admin confirmed
-  confirmedAt: datetime("confirmed_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const contacts = mysqlTable("contacts", {
-  id: id(),
-  name: varchar("name",{length:255}).notNull(),
-  email: varchar("email",{length:255}).notNull(),
-  message: text("message").notNull(),
-  status: mysqlEnum("status",["new","handled"]).notNull().default("new"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const auditLogs = mysqlTable("audit_logs", {
-  id: id(),
-  userId: varchar("user_id",{length:24}),
-  action: varchar("action",{length:120}).notNull(),
-  entity: varchar("entity",{length:60}).notNull(),
-  entityId: varchar("entity_id",{length:24}),
-  meta: json("meta"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const settings = mysqlTable("settings", {   // org details, bank details, SEO defaults
-  key: varchar("key",{length:100}).primaryKey(),
-  value: json("value").notNull(),
-});
-```
+`restrict` is the default for anything a financial or attribution trail depends
+on. This assumes the Phase 4 rule that **staff are deactivated, never deleted**
+— a delete that would orphan content or donations now fails at the database,
+not silently. `activities.cover_media_id` ↔ `media.activity_id` is a deliberate
+cycle; Drizzle needs an `AnyPgColumn` return annotation to resolve it.
 
 ---
 
@@ -238,10 +175,10 @@ middleware.ts        ← protects /(admin)
 
 ### Phase 0 — Setup
 - [ ] Scaffold Next.js + TS + Tailwind + shadcn/ui; build design tokens + base components from DESIGN_SYSTEM.md first.
-- [ ] Add Drizzle + drizzle-kit; set MySQL (PlanetScale) connection; create `db/schema.ts` above; run first migration.
+- [ ] Add Drizzle + drizzle-kit; set the Supabase Postgres connection (pooled + direct); create `db/schema.ts`; run first migration.
 - [ ] Base public layout + admin shell; seed script creates one Admin from the email you provide.
 - [ ] Deploy to Vercel/Netlify; set env vars.
-- **✅ Gate:** app deploys to a live URL and the migration runs clean on MySQL.
+- **✅ Gate:** app deploys to a live URL and the migration runs clean on Postgres.
 
 ### Phase 1 — Auth & RBAC
 - [ ] Auth.js credentials login; hash passwords (argon2/bcrypt).
@@ -290,7 +227,7 @@ Online card/gateway payments (Stripe/PayPal), CI/CD pipelines, Redis, containers
 1. **Currency** (e.g. USD, NGN, SAR) — drives display + the `currency` default.
 2. **First Admin email** — for the seed script.
 3. **Bank details** to show on the Donate page: account name, account number/IBAN, bank name, and what reference donors should quote.
-4. **DB choice** — MySQL + PlanetScale (this spec) or switch to Postgres + Neon? (Drizzle handles either.)
+4. ~~**DB choice**~~ — **decided 15 Aug 2026: PostgreSQL on Supabase.**
 5. **Auth** — Auth.js (in-app roles) or Clerk (hosted auth)?
 6. Verified sending domain + "from" email for acknowledgements.
 7. Real privacy policy / terms text and logo/brand assets.

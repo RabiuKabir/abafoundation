@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   DESIGN TOKENS — the single source of truth for the whole app.
+   Mirrors DESIGN_SYSTEM.md. Never hard-code a colour, radius or shadow in a
+   page or component: use these tokens (or the components built on them).
+   ========================================================================= */
+
+:root {
+  /* --- Brand palette ----------------------------------------------------- */
+  --ink: #1a2b3b; /* primary text */
+  --navy: #16324f; /* primary brand, headers, admin sidebar */
+  --teal: #2e6e8e; /* links, secondary buttons, accents */
+  --terracotta: #e4572e; /* the ONE warm CTA colour — "Donate" only */
+  --cream: #fbf7f0; /* public page background (not #fff) */
+  --surface: #ffffff; /* cards on cream */
+  --muted-ink: #6b7280; /* secondary text */
+  --hairline: #eae3d8; /* warm hairline borders */
+  --success: #2f7d5d;
+  --warning: #8a6d1a;
+  --danger: #9b2c2c;
+
+  /* Tinted surfaces derived from the palette */
+  --sand: #f1ebe0; /* warm fill (secondary buttons, muted rows) */
+  --mist: #e9f0f4; /* teal-tinted fill (accents, info) */
+  --navy-deep: #12283e; /* admin sidebar */
+  --admin-bg: #f6f2eb; /* admin content area */
+
+  /* --- Radius ------------------------------------------------------------ */
+  --radius: 0.875rem; /* 14px — cards + inputs */
+  --btn-radius: 0.625rem; /* 10px — buttons */
+  --pill-radius: 999px;
+
+  /* --- Semantic aliases consumed by shadcn/ui ---------------------------- */
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--navy);
+  --primary-foreground: #fdfbf7;
+  --secondary: var(--sand);
+  --secondary-foreground: var(--navy);
+  --muted: var(--sand);
+  --muted-foreground: var(--muted-ink);
+  --accent: var(--mist);
+  --accent-foreground: var(--teal);
+  --destructive: var(--danger);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--teal);
+
+  /* Admin sidebar (dark navy) */
+  --sidebar: var(--navy-deep);
+  --sidebar-foreground: #d8e2ea;
+  --sidebar-primary: var(--teal);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(255 255 255 / 8%);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: var(--teal);
+}
+
+@theme inline {
+  /* Fonts — headings Fraunces, everything else Inter. Never more than two. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Brand colours as utilities: bg-navy, text-teal, border-hairline, … */
+  --color-ink: var(--ink);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-teal: var(--teal);
+  --color-terracotta: var(--terracotta);
+  --color-cream: var(--cream);
+  --color-surface: var(--surface);
+  --color-sand: var(--sand);
+  --color-mist: var(--mist);
+  --color-hairline: var(--hairline);
+  --color-admin-bg: var(--admin-bg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  /* Semantic colours (shadcn) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale — cards/inputs 14px, buttons 10px, pills 999px */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.72);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-3xl: calc(var(--radius) * 2.1);
+  --radius-4xl: var(--pill-radius);
+  --radius-button: var(--btn-radius);
+  --radius-pill: var(--pill-radius);
+
+  /* Shadow — soft and low only. No hard drop shadows. */
+  --shadow-soft:
+    0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.06);
+  --shadow-lift:
+    0 2px 4px rgb(16 24 40 / 0.05), 0 12px 32px rgb(16 24 40 / 0.09);
+
+  /* Motion — 150–200ms ease on hover/focus */
+  --default-transition-duration: 180ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: light;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Type hierarchy: big Fraunces headline, calm Inter body. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading text-navy;
+    font-optical-sizing: auto;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--teal) 22%, transparent);
+  }
+
+  /* Accessible = better looking: never remove the focus ring. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .hover-lift:hover {
+      transform: none !important;
+    }
+  }
+}
+
+@layer components {
+  /* Buttons lift 1px on hover (see Button component). */
+  .hover-lift {
+    @apply transition-[transform,box-shadow,background-color,border-color];
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+  }
+}
