@@ -25,8 +25,14 @@
   --surface: #ffffff; /* cards on cream */
   --muted-ink: #6b7280; /* secondary text */
   --hairline: #eae3d8; /* warm hairline borders */
-  --success: #2f7d5d;
-  --warning: #8a6d1a;
+  /* Status colours are used as text on their own 10% tint (banners, badges).
+     At the exact spec values that measures 4.12:1 (success) and 4.06:1
+     (warning) — under WCAG AA. Both are darkened by 10%, the least that
+     clears 4.5:1, so they still read as the same colours. Same reasoning as
+     --terracotta-deep above: DESIGN_SYSTEM rule 8 outranks the exact hex.
+     Danger (6.01:1) and teal (4.60:1) already passed and are untouched. */
+  --success: #2a7154; /* spec #2f7d5d → 4.84:1 */
+  --warning: #7c6217; /* spec #8a6d1a → 4.81:1 */
   --danger: #9b2c2c;
 
   /* Tinted surfaces derived from the palette */
@@ -74,7 +80,12 @@
 @theme inline {
   /* Fonts — headings Fraunces, everything else Inter. Never more than two. */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+  /* Inter sits in the heading stack as a per-glyph fallback: Fraunces has no
+     naira sign (U+20A6), and without this a heading containing ₦ renders it
+     as a stray "N". Browsers fall back glyph by glyph, so headings still get
+     Fraunces for everything it does cover. */
+  --font-heading: var(--font-fraunces), var(--font-inter), ui-serif, Georgia,
+    serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Brand colours as utilities: bg-navy, text-teal, border-hairline, … */

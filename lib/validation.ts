@@ -105,6 +105,64 @@ export const mediaSchema = z.object({
 });
 
 /* --------------------------------------------------------------------------
+ * Donations — Hard Rule 1
+ *
+ * Nothing here can set a status. A public pledge is always created `pending`;
+ * only an Admin's confirm/reject route moves it, and only after they have seen
+ * the bank statement. Note the deliberate absence of a `status` field.
+ * ----------------------------------------------------------------------- */
+
+const amountString = z
+  .string()
+  .trim()
+  .min(1, "How much did you send?")
+  .transform((v) => v.replace(/[₦,\s]/g, ""))
+  .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), "Enter an amount like 5000 or 5000.50")
+  .refine((v) => Number(v) > 0, "The amount must be more than zero.")
+  .refine((v) => Number(v) <= 99_999_999.99, "That amount is larger than we can record.");
+
+/** The public "I've made a transfer" form. Every field optional but amount. */
+export const pledgeSchema = z.object({
+  donorName: z.string().trim().min(2, "Tell us your name.").max(255),
+  donorEmail: emailSchema,
+  amount: amountString,
+  transferredAt: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? new Date(v) : null))
+    .refine((d) => d === null || !Number.isNaN(d.getTime()), "Invalid date."),
+  reference: z.string().trim().max(120).optional().nullable(),
+  activityId: z.string().trim().max(24).optional().nullable(),
+  consentContact: z.boolean().default(false),
+  proofUrl: z.string().trim().url().max(600).optional().nullable(),
+  website: z.string().max(0, "Rejected.").optional(), // honeypot
+});
+
+/** An Admin recording money they have already seen on the statement. */
+export const offlineDonationSchema = z.object({
+  donorName: z.string().trim().max(255).optional().nullable(),
+  donorEmail: z.union([emailSchema, z.literal("")]).optional().nullable(),
+  amount: amountString,
+  method: z.enum(["bank_transfer", "cash"]).default("bank_transfer"),
+  reference: z.string().trim().max(120).optional().nullable(),
+  transferredAt: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? new Date(v) : null))
+    .refine((d) => d === null || !Number.isNaN(d.getTime()), "Invalid date."),
+  activityId: z.string().trim().max(24).optional().nullable(),
+});
+
+export const donationDecisionSchema = z.object({
+  decision: z.enum(["confirm", "reject"]),
+  note: z.string().trim().max(500).optional(),
+});
+
+/* --------------------------------------------------------------------------
  * Public forms
  * ----------------------------------------------------------------------- */
 

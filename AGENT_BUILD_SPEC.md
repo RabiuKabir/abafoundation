@@ -251,12 +251,51 @@ it live at once, and a prerendered build would need database access wherever
   calling `POST /api/activities/{id}/publish` got **403** and the row stayed
   `draft`. Only after an Admin approved did all four surfaces show it.
 
-### Phase 3 — Donations (bank transfer)
-- [ ] Donations schema; Settings holds the bank details.
-- [ ] Public Donate page: bank details + optional pledge form (creates `pending`, optional proof upload).
-- [ ] Emails: donor acknowledgement ("pending confirmation") + Admin alert.
-- [ ] Admin: list pending, **Confirm/Reject** (writes audit), and "+ Add donation" (offline).
-- **✅ Gate:** a public pledge stays `pending` until an Admin confirms; reports count only `confirmed`.
+### Phase 3 — Donations (bank transfer)  ✅ done 15 Aug 2026
+- [x] Bank details live in `settings`, shown on the Donate page. While they are
+      still the seeded placeholders the page says so in a banner, so nobody
+      transfers money to a demo account.
+- [x] Public Donate page: account details, what reference to quote, and an
+      optional "notify us of your transfer" form. Honeypot + rate limit, same
+      as Contact.
+- [x] Emails written and wired — donor acknowledgement (worded as *pending*,
+      never a receipt) and a Finance alert. With no verified sending domain
+      they are logged, not sent; filling in `RESEND_API_KEY` + `EMAIL_FROM`
+      switches that on with no code change.
+- [x] Admin: filter by status, Confirm/Reject, "+ Add donation" for cash or a
+      statement line with no matching pledge. Every decision writes an audit
+      row naming who made it.
+
+**Where Hard Rule 1 actually lives.** `POST /api/donations` has no code path
+that writes any status — the column defaults to `pending`. The only route that
+can move a donation is `POST /api/donations/[id]/confirm`, which requires
+`donations.confirm`, granted to admin alone. A settled donation returns 409
+rather than being re-decided, so the ledger can't be quietly rewritten.
+
+`/api/donations/offline` does create rows already `confirmed`. That is not an
+exception to the rule: the rule is that *the public* can never confirm money.
+There, an Admin is doing the same verification they would do on the confirm
+screen, in one step, attributed and audited identically.
+
+Every money figure filters on `status = 'confirmed'` — dashboard, donations
+total, and `lib/metrics.ts`. Pending is shown separately as work to do, never
+as money raised.
+
+- **✅ Gate PASSED**, eight checks, verified end to end: an anonymous pledge of
+  ₦250,000 was created `pending` and counted **₦0** towards the confirmed
+  total; anonymous got 401 and an Editor 403 from both the confirm route and
+  the offline route, with the row still `pending` afterwards; the Admin's
+  confirm succeeded, was attributed to them with a receipt number, and only
+  then did the total read ₦250,000; re-deciding it returned 409; both the
+  creation and the confirmation appear in the audit log.
+
+**Two more contrast fixes** (same reasoning as Phase 2's terracotta). Status
+colours are used as text on their own 10% tint, where the spec values measure
+4.12:1 (`--success`) and 4.06:1 (`--warning`) — under AA. Both darkened by 10%,
+the least that clears 4.5:1. Danger and teal already passed and are unchanged.
+Also: Fraunces has no naira glyph, so `₦` in a heading rendered as a stray "N";
+money figures now use the body face with tabular numerals, and Inter sits in
+the heading stack as a per-glyph fallback.
 
 ### Phase 4 — Admin & Reports
 - [ ] Dashboard metrics; approval queue; contact inbox (new/handled).
