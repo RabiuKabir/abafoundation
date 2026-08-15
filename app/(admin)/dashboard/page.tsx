@@ -1,14 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/admin/page-header";
+import { requirePageAccess } from "@/lib/session";
 
 export const metadata = { title: "Dashboard" };
 
-/**
- * Dashboard — Phase 0 placeholder shell.
- * The KPI row and recent-donations table are wired in Phase 4. Totals will
- * count confirmed donations only.
- */
 const kpis = [
   { label: "Confirmed raised (30d)", hint: "Confirmed donations only" },
   { label: "Pending pledges", hint: "Awaiting an Admin check" },
@@ -16,18 +13,31 @@ const kpis = [
   { label: "New messages", hint: "From the contact form" },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ denied?: string }>;
+}) {
+  const user = await requirePageAccess("activities.read.any");
+  const { denied } = await searchParams;
+
   return (
     <div className="mx-auto w-full max-w-[1400px]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            An overview of giving, content and messages.
-          </p>
-        </div>
-        <Badge variant="info">Phase 0 — shell only</Badge>
-      </div>
+      <PageHeader
+        title={`Welcome, ${user.name.split(" ")[0]}`}
+        description="An overview of giving, content and messages."
+        action={<Badge variant="info">Signed in as {user.role}</Badge>}
+      />
+
+      {denied ? (
+        <p
+          role="alert"
+          className="mt-6 rounded-lg border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning"
+        >
+          You don&apos;t have access to that section. If you think you should,
+          ask an Admin.
+        </p>
+      ) : null}
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (

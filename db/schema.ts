@@ -61,6 +61,11 @@ export const users = pgTable("users", {
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: roleEnum("role").notNull().default("editor"),
   active: boolean("active").notNull().default(true),
+  // Set whenever an Admin creates the account or resets the password by hand.
+  // Login refuses to go anywhere else until the user clears it. Without email
+  // there is no reset link, so temp passwords travel out-of-band — this stops
+  // one living forever.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

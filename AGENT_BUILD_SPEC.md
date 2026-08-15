@@ -180,12 +180,38 @@ middleware.ts        ← protects /(admin)
 - [ ] Deploy to Vercel/Netlify; set env vars.
 - **✅ Gate:** app deploys to a live URL and the migration runs clean on Postgres.
 
-### Phase 1 — Auth & RBAC
-- [ ] Auth.js credentials login; hash passwords (argon2/bcrypt).
+### Phase 1 — Auth & RBAC  ✅ done 15 Aug 2026
+- [x] Auth.js credentials login; bcrypt (cost 12). Generic failure message and a
+      dummy-hash compare on unknown emails, so the form can't be used to
+      discover which addresses have accounts.
+- [x] `lib/rbac.ts` `can()` — deny by default, unknown action refused for
+      everyone — plus `proxy.ts` (Next 16's name for `middleware.ts`) gating
+      `(admin)`.
+- [x] Admin creates accounts directly, with `must_change_password` forcing the
+      owner to replace the temporary password before anything else loads.
+- [x] Break glass: `SEED_ADMIN_FORCE_PASSWORD=true` resets an Admin password
+      from the machine holding `.env`.
+
+**Deferred until a verified sending domain exists** (decided 15 Aug 2026 —
+Admin creates accounts by hand for now):
 - [ ] Invite flow (Admin invites → email link → set password → verify).
 - [ ] Password reset (no enumeration, expiring single-use token).
-- [ ] `lib/rbac.ts` `can()` + `middleware.ts` guarding `(admin)`.
-- **✅ Gate:** an Editor is rejected **by the server** from the Users/Donations/Settings routes (not just a hidden menu).
+
+The `invites` table stays in the schema, unused, for when email lands. Note the
+consequence: with no reset email, a forgotten Admin password has no in-app
+recovery — the break-glass seed is the only way back.
+
+**Two layers, deliberately.** `proxy.ts` runs on the edge and cannot reach the
+database, so it checks only the JWT — a cheap first bounce. Every page and
+route handler behind it re-checks against the database via `lib/session.ts`,
+because a token is a snapshot from sign-in (deactivate someone and their old
+token still claims they're active) and because a route must never assume
+something upstream ran.
+
+- **✅ Gate PASSED:** an Editor gets `403 {"error":"Not allowed."}` from the
+  server on `GET/POST /api/users`, `/api/donations`, `/api/settings` and
+  `/api/reports`, and is redirected away from those pages — verified with a
+  real signed-in Editor session, not a hidden menu.
 
 ### Phase 2 — Content & Public Site
 - [ ] Activities/Categories/Media wired; media upload (validate type/size, require alt text).

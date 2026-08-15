@@ -84,12 +84,38 @@ async function main() {
     .limit(1);
 
   if (existing) {
-    await db
-      .update(users)
-      .set({ role: "admin", active: true })
-      .where(eq(users.id, existing.id));
-    console.log(`✔ ${email} already exists — ensured role=admin, active=true.`);
-    console.log("  Password left unchanged. Use the reset flow to change it.");
+    // BREAK GLASS. There is no password-reset email yet, so if the last Admin
+    // forgets their password nothing in the app can rescue them. Setting
+    // SEED_ADMIN_FORCE_PASSWORD=true overwrites the hash from the machine that
+    // holds .env — deliberately opt-in, so a routine re-seed can't silently
+    // reset a live account.
+    const force = /^(1|true|yes)$/i.test(
+      process.env.SEED_ADMIN_FORCE_PASSWORD ?? ""
+    );
+
+    if (force) {
+      await db
+        .update(users)
+        .set({
+          role: "admin",
+          active: true,
+          passwordHash: await bcrypt.hash(password, 12),
+          mustChangePassword: true,
+        })
+        .where(eq(users.id, existing.id));
+      console.log(`✔ ${email} — password RESET, role=admin, active=true.`);
+      console.log("  They must choose a new password at next sign-in.");
+    } else {
+      await db
+        .update(users)
+        .set({ role: "admin", active: true })
+        .where(eq(users.id, existing.id));
+      console.log(`✔ ${email} already exists — ensured role=admin, active=true.`);
+      console.log("  Password left unchanged.");
+      console.log(
+        "  Locked out? Re-run with SEED_ADMIN_FORCE_PASSWORD=true to reset it."
+      );
+    }
   } else {
     const passwordHash = await bcrypt.hash(password, 12);
     await db.insert(users).values({ name, email, passwordHash, role: "admin" });

@@ -7,6 +7,7 @@ import {
   ClipboardCheckIcon,
   FileTextIcon,
   LayoutDashboardIcon,
+  LogOutIcon,
   MailIcon,
   ScrollTextIcon,
   SettingsIcon,
@@ -15,30 +16,38 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { can, type Action, type Role } from "@/lib/rbac";
 
 /**
- * Admin sidebar shell — dark navy rail beside a light warm content area.
- * `roles` is the menu-visibility hint only. Phase 1 adds the real gate:
- * every route re-checks `can(user, action)` on the server. Deny by default.
+ * Admin sidebar. Items are filtered by the same `can()` the server uses, so
+ * the menu matches reality — but hiding a link is cosmetic only. Every route
+ * behind these links re-checks permission on the server (lib/session.ts).
  */
-const items = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon, roles: ["admin", "editor"] },
-  { href: "/activities", label: "Activities", icon: FileTextIcon, roles: ["admin", "editor"] },
-  { href: "/approvals", label: "Approvals", icon: ClipboardCheckIcon, roles: ["admin"] },
-  { href: "/donations", label: "Donations", icon: BanknoteIcon, roles: ["admin"] },
-  { href: "/reports", label: "Reports", icon: TrendingUpIcon, roles: ["admin"] },
-  { href: "/messages", label: "Messages", icon: MailIcon, roles: ["admin"] },
-  { href: "/users", label: "Users", icon: UsersIcon, roles: ["admin"] },
-  { href: "/audit", label: "Audit log", icon: ScrollTextIcon, roles: ["admin"] },
-  { href: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin"] },
-] as const;
+const items: { href: string; label: string; icon: typeof UsersIcon; action: Action }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon, action: "activities.read.any" },
+  { href: "/activities", label: "Activities", icon: FileTextIcon, action: "activities.create" },
+  { href: "/approvals", label: "Approvals", icon: ClipboardCheckIcon, action: "activities.publish" },
+  { href: "/donations", label: "Donations", icon: BanknoteIcon, action: "donations.read" },
+  { href: "/reports", label: "Reports", icon: TrendingUpIcon, action: "reports.read" },
+  { href: "/messages", label: "Messages", icon: MailIcon, action: "messages.read" },
+  { href: "/users", label: "Users", icon: UsersIcon, action: "users.read" },
+  { href: "/audit", label: "Audit log", icon: ScrollTextIcon, action: "audit.read" },
+  { href: "/settings", label: "Settings", icon: SettingsIcon, action: "settings.read" },
+];
 
-export function Sidebar() {
+export function Sidebar({
+  user,
+  signOutAction,
+}: {
+  user: { name: string; email: string; role: Role; active: boolean };
+  signOutAction: () => Promise<void>;
+}) {
   const pathname = usePathname();
+  const visible = items.filter((item) => can(user, item.action));
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-18 items-center gap-2 px-6">
+      <div className="flex h-18 items-center px-6">
         <Link
           href="/dashboard"
           className="font-heading text-lg font-semibold tracking-tight text-white"
@@ -51,7 +60,7 @@ export function Sidebar() {
       </div>
 
       <nav aria-label="Admin" className="flex-1 space-y-1 px-3 py-4">
-        {items.map((item) => {
+        {visible.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -74,9 +83,22 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-sidebar-border px-6 py-5 text-xs text-sidebar-foreground/60">
-        Signed in as <span className="text-sidebar-foreground">Admin</span>
-        <p className="mt-1 text-sidebar-foreground/40">Auth arrives in Phase 1.</p>
+      <div className="border-t border-sidebar-border px-6 py-5">
+        <p className="truncate text-sm font-medium text-sidebar-foreground">
+          {user.name}
+        </p>
+        <p className="truncate text-xs text-sidebar-foreground/60">
+          {user.email} · {user.role}
+        </p>
+        <form action={signOutAction} className="mt-3">
+          <button
+            type="submit"
+            className="flex items-center gap-2 rounded-button text-xs text-sidebar-foreground/70 transition-colors hover:text-white"
+          >
+            <LogOutIcon className="size-3.5" aria-hidden="true" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   );
