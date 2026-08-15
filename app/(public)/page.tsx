@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { ActivityCard } from "@/components/public/activity-card";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -9,12 +10,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Container, Section } from "@/components/ui/container";
+import { listPublicActivities } from "@/lib/activities";
 
 /**
- * Home — Phase 0 placeholder.
- * Built only from design-system tokens and components, so it doubles as proof
- * the system is wired. Real content (featured activities from the database)
- * lands in Phase 2.
+ * Rendered per request, not at build time.
+ *
+ * Two reasons: an Admin who approves a story expects it live immediately, not
+ * after the next deploy; and a prerendered build would need the database to be
+ * reachable from wherever `next build` runs. Traffic here is small, so a query
+ * per request is the cheaper trade. Revisit caching in Phase 5 if that changes.
+ */
+export const dynamic = "force-dynamic";
+
+/**
+ * Home — hero, Donate CTA, three featured activities, footer.
+ *
+ * The featured row now comes from the database and shows only published
+ * activities. `pillars` is the standing explanation of the work and stays
+ * hand-written; it isn't content anyone edits.
  */
 const pillars = [
   {
@@ -43,7 +56,10 @@ const pillars = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Published only — listPublicActivities is the single definition of that.
+  const { items: featured } = await listPublicActivities({ perPage: 3 });
+
   return (
     <>
       <Section spacing="loose">
@@ -122,6 +138,29 @@ export default function HomePage() {
           </div>
         </Container>
       </Section>
+
+      {featured.length > 0 ? (
+        <Section spacing="tight" className="border-t border-border">
+          <Container>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <h2 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
+                Recently, in the field
+              </h2>
+              <Link
+                href="/programs"
+                className="text-sm font-medium text-teal hover:underline"
+              >
+                All programs →
+              </Link>
+            </div>
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {featured.map((activity) => (
+                <ActivityCard key={activity.id} activity={activity} />
+              ))}
+            </div>
+          </Container>
+        </Section>
+      ) : null}
     </>
   );
 }

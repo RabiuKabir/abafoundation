@@ -16,8 +16,16 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import bcrypt from "bcryptjs";
 
-import { settings, users } from "./schema";
+import { categories, settings, users } from "./schema";
 import { sslFor } from "./ssl";
+
+/** The foundation's real programme categories. Editable in Settings later. */
+const CATEGORIES = [
+  { name: "Scholarships", slug: "scholarships" },
+  { name: "Empowerments", slug: "empowerments" },
+  { name: "Community Service", slug: "community-service" },
+  { name: "Helping the Needy", slug: "helping-the-needy" },
+];
 
 /**
  * DEMO VALUES — not a real account. Replace in Admin → Settings before the
@@ -135,6 +143,20 @@ async function main() {
     } else {
       await db.insert(settings).values(row);
       console.log(`✔ Seeded settings["${row.key}"] with DEMO values.`);
+    }
+  }
+
+  for (const category of CATEGORIES) {
+    const [present] = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.slug, category.slug))
+      .limit(1);
+    if (present) {
+      console.log(`· category "${category.name}" already exists.`);
+    } else {
+      await db.insert(categories).values(category);
+      console.log(`✔ Seeded category "${category.name}".`);
     }
   }
 

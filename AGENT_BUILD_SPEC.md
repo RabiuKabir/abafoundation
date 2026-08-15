@@ -213,12 +213,43 @@ something upstream ran.
   `/api/reports`, and is redirected away from those pages — verified with a
   real signed-in Editor session, not a hidden menu.
 
-### Phase 2 — Content & Public Site
-- [ ] Activities/Categories/Media wired; media upload (validate type/size, require alt text).
-- [ ] Activity CRUD with `draft → in_review → published → archived`.
-- [ ] Public pages: Home, About, Programs (filter + pagination), Activity detail, Contact (honeypot + rate limit).
-- [ ] SEO fields, sitemap.xml, robots.txt, 404/500; accessibility pass (keyboard, contrast, labels, alt text).
-- **✅ Gate:** an Editor's draft cannot appear publicly until an Admin approves it.
+### Phase 2 — Content & Public Site  ✅ done 15 Aug 2026
+- [x] Activities/Categories/Media wired. Categories seeded: Scholarships,
+      Empowerments, Community Service, Helping the Needy.
+- [x] Activity CRUD with `draft → in_review → published → archived`. Editors
+      may edit only their own, and only while it is a draft — otherwise an
+      approval could be rewritten after the fact.
+- [x] Public pages: Home, About, Programs (category filter + pagination),
+      Activity detail, Contact (honeypot + rate limit).
+- [x] SEO fields per activity, sitemap.xml, robots.txt, 404 and 500.
+- [x] Accessibility: axe-core clean (WCAG 2.1 A/AA) on all seven public pages;
+      skip link, visible focus, every control labelled, no missing alt.
+- [ ] **Media upload is written but UNTESTED** — waiting on Supabase Storage
+      credentials. `lib/storage.ts` + `POST /api/media` validate type, size and
+      require alt text, but nothing has been uploaded through them yet.
+
+**The one visual deviation from DESIGN_SYSTEM.md.** White text on the
+specified terracotta `#e4572e` measures **3.68:1**, below the 4.5:1 WCAG AA
+requires. Rule 8 of the design system ("accessible = better looking, WCAG AA")
+outranks the exact hex, so filled Donate buttons use `--terracotta-deep`
+`#c9481f` (4.74:1). The original token is unchanged and still used for accents,
+where it carries no text. Every other token pair passes: white-on-navy 13.1:1,
+ink-on-cream 13.5:1, teal-on-cream 5.3:1, muted-on-cream 4.5:1.
+
+**Public visibility has exactly one definition** — `publicFilter()` in
+`lib/activities.ts` (published, not soft-deleted, publish date reached). Every
+public query composes it; none filter by hand. That is what makes the gate hold
+rather than depending on each page remembering.
+
+Public content pages are `force-dynamic`: an Admin who approves a story expects
+it live at once, and a prerendered build would need database access wherever
+`next build` runs.
+
+- **✅ Gate PASSED:** verified end to end with a real Editor session. While
+  `draft` and again while `in_review`, the story returned **404** on its own
+  URL and was absent from /programs, the home page and sitemap.xml. The Editor
+  calling `POST /api/activities/{id}/publish` got **403** and the row stayed
+  `draft`. Only after an Admin approved did all four surfaces show it.
 
 ### Phase 3 — Donations (bank transfer)
 - [ ] Donations schema; Settings holds the bank details.

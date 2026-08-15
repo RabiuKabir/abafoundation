@@ -25,8 +25,10 @@ const buttonVariants = cva(
       variant: {
         primary:
           "bg-primary text-primary-foreground shadow-soft hover:bg-[color-mix(in_oklab,var(--navy),white_10%)] hover:shadow-lift",
+        // terracotta-deep, not terracotta: white on the lighter brand shade
+        // measures 3.68:1 and fails WCAG AA. See app/globals.css.
         donate:
-          "bg-terracotta text-white shadow-soft hover:bg-[color-mix(in_oklab,var(--terracotta),black_8%)] hover:shadow-lift",
+          "bg-terracotta-deep text-white shadow-soft hover:bg-[color-mix(in_oklab,var(--terracotta-deep),black_8%)] hover:shadow-lift",
         outline:
           "border-border bg-surface text-navy shadow-soft hover:border-teal hover:text-teal hover:shadow-lift",
         ghost: "text-navy hover:bg-secondary hover:text-navy",

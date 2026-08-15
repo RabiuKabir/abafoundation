@@ -15,6 +15,7 @@
     "db:tunnel": "node scripts/pg-tunnel.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1111.0",
     "@base-ui/react": "^1.7.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "bcryptjs": "^3.0.3",
@@ -39,6 +40,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axe-core": "^4.13.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",

@@ -16,6 +16,11 @@
   --navy: #16324f; /* primary brand, headers, admin sidebar */
   --teal: #2e6e8e; /* links, secondary buttons, accents */
   --terracotta: #e4572e; /* the ONE warm CTA colour — "Donate" only */
+  /* White text on #e4572e measures 3.68:1 — below the 4.5:1 WCAG AA needs.
+     DESIGN_SYSTEM rule 8 ("accessible = better looking") outranks the exact
+     hex, so filled Donate buttons use this deeper shade (4.74:1). The lighter
+     token stays for accents, where it carries no text. */
+  --terracotta-deep: #c9481f;
   --cream: #fbf7f0; /* public page background (not #fff) */
   --surface: #ffffff; /* cards on cream */
   --muted-ink: #6b7280; /* secondary text */
@@ -78,6 +83,7 @@
   --color-navy-deep: var(--navy-deep);
   --color-teal: var(--teal);
   --color-terracotta: var(--terracotta);
+  --color-terracotta-deep: var(--terracotta-deep);
   --color-cream: var(--cream);
   --color-surface: var(--surface);
   --color-sand: var(--sand);
