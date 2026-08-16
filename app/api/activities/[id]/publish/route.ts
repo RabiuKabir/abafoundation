@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { activities } from "@/db/schema";
 import { HttpError, requirePermission, toResponse } from "@/lib/session";
 import { fieldErrors, reviewDecisionSchema } from "@/lib/validation";
+import { writeAudit } from "@/lib/audit";
 
 /**
  * The approval decision — Admin only. This is the gate: `activities.publish`
@@ -18,7 +19,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requirePermission("activities.publish");
+    const admin = await requirePermission("activities.publish");
     const { id } = await params;
 
     const parsed = reviewDecisionSchema.safeParse(await request.json());
@@ -51,6 +52,15 @@ export async function POST(
         .update(activities)
         .set({ status: "draft" })
         .where(eq(activities.id, id));
+
+      await writeAudit({
+        userId: admin.id,
+        action: "activity.return",
+        entity: "activity",
+        entityId: id,
+        meta: { note: parsed.data.note ?? null },
+      });
+
       return Response.json({ ok: true, status: "draft" });
     }
 
@@ -65,6 +75,14 @@ export async function POST(
         publishedAt: row.publishedAt ?? new Date(),
       })
       .where(eq(activities.id, id));
+
+    await writeAudit({
+      userId: admin.id,
+      action: "activity.publish",
+      entity: "activity",
+      entityId: id,
+      meta: { previousStatus: row.status },
+    });
 
     return Response.json({ ok: true, status: "published" });
   } catch (error) {

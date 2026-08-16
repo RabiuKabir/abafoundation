@@ -60,6 +60,48 @@ export const setActiveSchema = z.object({
   active: z.boolean(),
 });
 
+export const updateUserSchema = z
+  .object({
+    active: z.boolean().optional(),
+    role: z.enum(["admin", "editor"]).optional(),
+  })
+  .refine(
+    (v) => v.active !== undefined || v.role !== undefined,
+    "Nothing to change."
+  );
+
+/* Settings — org details, the bank details shown on Donate, and categories. */
+
+export const orgSettingsSchema = z.object({
+  name: z.string().trim().min(2, "Enter the organisation name.").max(255),
+  email: emailSchema,
+  phone: z.string().trim().max(60).optional().nullable(),
+  address: z.string().trim().max(500).optional().nullable(),
+});
+
+/**
+ * The bank details a donor will type into their banking app. Getting one
+ * character wrong here sends money to the wrong place, so the fields are
+ * required and the account number is digits only.
+ */
+export const bankSettingsSchema = z.object({
+  accountName: z.string().trim().min(2, "Enter the account name.").max(255),
+  accountNumber: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{6,34}$/, "Digits only, between 6 and 34 of them."),
+  bankName: z.string().trim().min(2, "Enter the bank name.").max(255),
+  referenceHint: z
+    .string()
+    .trim()
+    .min(10, "Tell donors what to quote on the transfer.")
+    .max(300),
+});
+
+export const categorySchema = z.object({
+  name: z.string().trim().min(2, "Enter a name.").max(120),
+});
+
 /* --------------------------------------------------------------------------
  * Content
  * ----------------------------------------------------------------------- */

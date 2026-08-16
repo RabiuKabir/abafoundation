@@ -74,20 +74,28 @@ export function UsersClient({
     router.refresh();
   }
 
-  async function setActive(id: string, active: boolean) {
+  async function patchUser(
+    id: string,
+    changes: { active?: boolean; role?: "admin" | "editor" }
+  ) {
     setBusy(id);
     setFormError(null);
     setNotice(null);
     const res = await fetch(`/api/users/${id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ active }),
+      body: JSON.stringify(changes),
     });
     const data = await res.json().catch(() => ({}));
     setBusy(null);
     if (!res.ok) {
       setFormError(data.error ?? "Could not update that user.");
       return;
+    }
+    if (data.reassigned > 0) {
+      setNotice(
+        `Deactivated. ${data.reassigned} unfinished draft(s) moved to you so the work isn't stranded.`
+      );
     }
     router.refresh();
   }
@@ -197,9 +205,24 @@ export function UsersClient({
                     </div>
                   </td>
                   <td className="py-4">
-                    <Badge variant={u.role === "admin" ? "info" : "neutral"}>
-                      {u.role}
-                    </Badge>
+                    {u.id === currentUserId ? (
+                      <Badge variant="info">{u.role}</Badge>
+                    ) : (
+                      <select
+                        aria-label={`Role for ${u.name}`}
+                        value={u.role}
+                        disabled={busy === u.id}
+                        onChange={(e) =>
+                          patchUser(u.id, {
+                            role: e.target.value as "admin" | "editor",
+                          })
+                        }
+                        className="h-9 rounded-button border border-border bg-surface px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+                      >
+                        <option value="editor">editor</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    )}
                   </td>
                   <td className="py-4">
                     <div className="flex flex-wrap gap-1.5">
@@ -219,7 +242,7 @@ export function UsersClient({
                         variant="outline"
                         size="sm"
                         disabled={busy === u.id}
-                        onClick={() => setActive(u.id, !u.active)}
+                        onClick={() => patchUser(u.id, { active: !u.active })}
                       >
                         {busy === u.id
                           ? "…"

@@ -15,7 +15,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        neutral: "border-border bg-secondary text-muted-foreground",
+        // Muted text on the sand tint measures 4.39:1 at 12px — just under
+        // AA. The badge's own fill is darker than any page background, so it
+        // needs the full-strength ink rather than the secondary text colour.
+        neutral: "border-border bg-secondary text-ink",
         info: "border-teal/20 bg-mist text-teal",
         success: "border-success/20 bg-success/10 text-success",
         warning: "border-warning/20 bg-warning/10 text-warning",

@@ -24,7 +24,11 @@ export type AuditAction =
   | "user.create"
   | "user.activate"
   | "user.deactivate"
+  | "user.role.change"
   | "user.password.change"
+  | "activity.reassign"
+  | "message.handle"
+  | "report.export"
   | "settings.update";
 
 export async function writeAudit({

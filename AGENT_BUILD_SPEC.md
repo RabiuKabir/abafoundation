@@ -297,13 +297,49 @@ Also: Fraunces has no naira glyph, so `₦` in a heading rendered as a stray "N"
 money figures now use the body face with tabular numerals, and Inter sits in
 the heading stack as a per-glyph fallback.
 
-### Phase 4 — Admin & Reports
-- [ ] Dashboard metrics; approval queue; contact inbox (new/handled).
-- [ ] Users management (Admin): invite, role, deactivate (reassign that user's drafts to another Admin on deactivate).
-- [ ] Reports: date/category/status filter + confirmed totals + CSV export.
-- [ ] Audit log write on sensitive actions + read-only viewer.
-- [ ] Settings: org details, bank details, categories.
-- **✅ Gate:** every donation confirm/reject and role change appears in the audit log; an Admin can export a CSV.
+### Phase 4 — Admin & Reports  ✅ done 16 Aug 2026
+- [x] Dashboard metrics and approval queue (built in Phases 2–3); contact inbox
+      with new/handled. Until now messages were stored with no way to read
+      them — the form was a black hole.
+- [x] Users: create, change role, deactivate. **Invite by email stays deferred**
+      with the rest of the mail work. Deactivating someone hands their unfinished
+      drafts to the Admin doing it; published work keeps its original author,
+      which is a matter of record rather than ownership.
+- [x] Reports: date, category and status filters in the URL (so a report can be
+      bookmarked or pasted to a colleague), confirmed totals, breakdown by
+      category, CSV export.
+- [x] Audit writes on every sensitive action + a read-only viewer, paginated.
+- [x] Settings: org details, bank details, categories.
+
+**Two guards against locking yourself out**, since there is no password-reset
+email: an Admin can't deactivate or demote themselves, and the last active
+Admin can't be removed by anyone. Without these the only way back would be the
+break-glass seed script.
+
+**Settings is the route to going live.** Saving real bank details clears the
+`demo` flag, which removes the "these are placeholders" warning from the public
+Donate page. That is the intended pre-launch step — no SQL required.
+
+**CSV export escapes formula injection.** A donor can type `=cmd|'/c calc'!A1`
+into the name field on a public form; Excel and Sheets execute leading
+`= + - @` when the file opens. Every cell starting with one is prefixed with a
+quote. Exporting is itself audited with the filters used and the row count,
+because it takes donor names and emails out of the system.
+
+- **✅ Gate PASSED**, nine checks: a contact message was submitted publicly,
+  read in the inbox and marked handled; a donation confirm and two role changes
+  and a deactivation all appear in the audit log with the acting Admin named;
+  an Admin deactivating themselves got 409; the CSV downloaded, with the
+  injection payload neutralised to `'=cmd…`; and saving real bank details
+  through Settings cleared the demo flag and removed the warning from Donate.
+
+**Accessibility, now including the admin.** axe-core had only ever seen public
+pages, since admin needs a session. Auditing signed-in surfaced two more
+issues: `--muted-ink` `#6b7280` passes on cream (4.53:1) but fails on the admin
+background (4.33:1) where most secondary text lives — nudged to `#666d79`,
+which clears all three surfaces; and the neutral badge needed full-strength ink
+on its sand fill (4.39:1 at 12px). The hidden file input also had no
+accessible name. **0 violations across all 20 pages, public and admin.**
 
 ### Phase 5 — Security, Polish & Launch
 - [ ] Server-side validation everywhere; rate limits on auth/contact/pledge; secure headers + CORS.

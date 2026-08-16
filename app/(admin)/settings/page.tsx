@@ -1,26 +1,38 @@
+import { sql } from "drizzle-orm";
+
 import { PageHeader } from "@/components/admin/page-header";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
+import { db } from "@/lib/db";
+import { activities, categories } from "@/db/schema";
+import { getBankDetails, getOrgDetails } from "@/lib/settings";
 import { requirePageAccess } from "@/lib/session";
+import { SettingsClient } from "./settings-client";
 
 export const metadata = { title: "Settings" };
 
-export default async function Page() {
-  // Hard Rule 2 — the server decides, every time.
+export default async function SettingsPage() {
   await requirePageAccess("settings.read");
 
+  const [org, bank, cats] = await Promise.all([
+    getOrgDetails(),
+    getBankDetails(),
+    db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        used: sql<number>`(select count(*) from ${activities} where ${activities.categoryId} = ${categories.id})::int`,
+      })
+      .from(categories)
+      .orderBy(categories.name),
+  ]);
+
   return (
-    <div className="mx-auto w-full max-w-[1400px]">
+    <div className="mx-auto w-full max-w-[1000px]">
       <PageHeader
         title="Settings"
-        description="Organisation details, the bank details shown on the Donate page, and categories."
-        action={<Badge variant="info">Arrives in a later phase</Badge>}
+        description="Organisation details, the bank details donors see, and the programme categories."
       />
-      <EmptyState
-        className="mt-10"
-        title="Nothing here yet"
-        description="This section is a guarded shell. The route already refuses anyone without permission — the features land in a later phase."
-      />
+      <SettingsClient org={org ?? {}} bank={bank ?? {}} categories={cats} />
     </div>
   );
 }

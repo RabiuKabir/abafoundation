@@ -23,7 +23,11 @@
   --terracotta-deep: #c9481f;
   --cream: #fbf7f0; /* public page background (not #fff) */
   --surface: #ffffff; /* cards on cream */
-  --muted-ink: #6b7280; /* secondary text */
+  /* Secondary text. The spec value #6b7280 clears AA on cream (4.53:1) but
+     fails on the admin content background (4.33:1), where most secondary text
+     actually lives. Nudged darker so it passes on all three surfaces we use —
+     cream 4.88, white 5.21, admin 4.67. */
+  --muted-ink: #666d79;
   --hairline: #eae3d8; /* warm hairline borders */
   /* Status colours are used as text on their own 10% tint (banners, badges).
      At the exact spec values that measures 4.12:1 (success) and 4.06:1

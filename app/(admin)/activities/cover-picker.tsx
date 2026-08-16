@@ -106,9 +106,12 @@ export function CoverPicker({
           </p>
         ) : null}
 
+        {/* Visually hidden but still a real form control, so it needs a name
+            a screen reader can announce. */}
         <input
           ref={fileRef}
           type="file"
+          aria-label="Choose a cover image to upload"
           accept={ACCEPTED.join(",")}
           className="sr-only"
           onChange={(e) => {

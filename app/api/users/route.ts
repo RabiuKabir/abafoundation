@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { users } from "@/db/schema";
 import { requirePermission, toResponse } from "@/lib/session";
 import { createUserSchema, fieldErrors } from "@/lib/validation";
+import { writeAudit } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -32,7 +33,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requirePermission("users.create");
+    const actor = await requirePermission("users.create");
 
     const parsed = createUserSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -68,6 +69,14 @@ export async function POST(request: Request) {
         mustChangePassword: true,
       })
       .returning({ id: users.id, email: users.email, role: users.role });
+
+    await writeAudit({
+      userId: actor.id,
+      action: "user.create",
+      entity: "user",
+      entityId: created.id,
+      meta: { email: created.email, role: created.role },
+    });
 
     return Response.json({ user: created }, { status: 201 });
   } catch (error) {
